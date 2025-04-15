@@ -7,24 +7,24 @@
 
 - name: Check existence of Anki synchronization server systemd service
   ansible.builtin.stat:
-    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ anki_identifier }}.service"
-  register: anki_service_stat
+    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ excalidraw_identifier }}.service"
+  register: excalidraw_service_stat
 
-- when: anki_service_stat.stat.exists | bool
+- when: excalidraw_service_stat.stat.exists | bool
   block:
     - name: Ensure Anki synchronization server systemd service is stopped
       ansible.builtin.service:
-        name: "{{ anki_identifier }}"
+        name: "{{ excalidraw_identifier }}"
         state: stopped
         enabled: false
         daemon_reload: true
 
     - name: Ensure Anki synchronization server systemd service doesn't exist
       ansible.builtin.file:
-        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ anki_identifier }}.service"
+        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ excalidraw_identifier }}.service"
         state: absent
 
     - name: Ensure Anki synchronization server base directory doesn't exist
       ansible.builtin.file:
-        path: "{{ anki_base_path }}"
+        path: "{{ excalidraw_base_path }}"
         state: absent

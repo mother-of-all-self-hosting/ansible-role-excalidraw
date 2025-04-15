@@ -1,7 +1,7 @@
 galaxy_info:
   author: Suguru Hirahara
   company: progressiv
-  role_name: anki
+  role_name: excalidraw
   namespace: progressiv
   description: Anki synchronization server
   platforms:

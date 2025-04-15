@@ -6,21 +6,21 @@
 ---
 
 - block:
-    - when: anki_enabled | bool
+    - when: excalidraw_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
 
-    - when: anki_enabled | bool
+    - when: excalidraw_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
   tags:
     - setup-all
-    - setup-anki
+    - setup-excalidraw
     - install-all
-    - install-anki
+    - install-excalidraw
 
 - block:
-    - when: not anki_enabled | bool
+    - when: not excalidraw_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
   tags:
     - setup-all
-    - setup-anki
+    - setup-excalidraw
