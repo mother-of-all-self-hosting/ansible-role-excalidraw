@@ -56,6 +56,8 @@ excalidraw_hostname: "example.com"
 
 After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
 
+**Note**: hosting Excalidraw client under a subpath (by configuring the `excalidraw_path_prefix` variable) does not seem to be possible due to Excalidraw's technical limitations.
+
 ### Extending the configuration
 
 There are some additional things you may wish to configure about the component.
