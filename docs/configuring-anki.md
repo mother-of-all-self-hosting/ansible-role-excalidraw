@@ -16,15 +16,15 @@ SPDX-FileCopyrightText: 2024 - 2025 Suguru Hirahara
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# Setting up Anki synchronization server
+# Setting up Excalidraw synchronization server
 
-This is an [Ansible](https://www.ansible.com/) role which installs [a synchronization server](https://github.com/excalidraw/excalidraw/tree/main/docs/syncserver) for [Anki](https://apps.excalidrawweb.net) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [a synchronization server](https://github.com/excalidraw/excalidraw/tree/main/docs/syncserver) for [Excalidraw](https://apps.excalidrawweb.net) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
-Anki is a flashcard program that helps you spend more time on challenging material, and less on what you already know. This role enables to run a self-hosted synchronization server, similar to what AnkiWeb.net offers.
+Excalidraw is a flashcard program that helps you spend more time on challenging material, and less on what you already know. This role enables to run a self-hosted synchronization server, similar to what ExcalidrawWeb.net offers.
 
 See the project's [documentation](https://docs.excalidrawweb.net/sync-server.html) to learn what the synchronization server does and why it might be useful to you.
 
-✨ Anki (暗記) means "Memorize" in Japanese.
+✨ Excalidraw (暗記) means "Memorize" in Japanese.
 
 >[!NOTE]
 >
@@ -113,7 +113,7 @@ If you use the MASH playbook, the shortcut commands with the [`just` program](ht
 
 After running the command for installation, the synchronization server becomes available at the specified hostname like `https://example.com`.
 
-If using a reverse proxy to provide HTTPS access and serving the instance under a subpath, make sure to include a trailing slash when configuring Anki. See [here](https://docs.excalidrawweb.net/sync-server.html#reverse-proxies) for more information.
+If using a reverse proxy to provide HTTPS access and serving the instance under a subpath, make sure to include a trailing slash when configuring Excalidraw. See [here](https://docs.excalidrawweb.net/sync-server.html#reverse-proxies) for more information.
 
 ## Troubleshooting
 

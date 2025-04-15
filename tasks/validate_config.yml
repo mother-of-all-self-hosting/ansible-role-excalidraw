@@ -5,7 +5,7 @@
 
 ---
 
-- name: Fail if required Anki synchronization server settings not defined
+- name: Fail if required Excalidraw synchronization server settings not defined
   ansible.builtin.fail:
     msg: >
       You need to define a required configuration setting (`{{ item }}`).
@@ -21,7 +21,7 @@
 
 - when: excalidraw_container_labels_traefik_enabled | bool
   block:
-    - name: Fail if required Anki synchronization server Traefik settings not defined
+    - name: Fail if required Excalidraw synchronization server Traefik settings not defined
       ansible.builtin.fail:
         msg: >-
           You need to define a required configuration setting (`{{ item }}`).

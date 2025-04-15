@@ -5,9 +5,9 @@ SPDX-FileCopyrightText: 2025 Suguru Hirahara
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# Anki synchronization server Ansible role
+# Excalidraw synchronization server Ansible role
 
-This is an [Ansible](https://www.ansible.com/) role which installs [a synchronization server](https://github.com/excalidraw/excalidraw/tree/main/docs/syncserver) for [Anki](https://apps.excalidrawweb.net) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [a synchronization server](https://github.com/excalidraw/excalidraw/tree/main/docs/syncserver) for [Excalidraw](https://apps.excalidrawweb.net) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
 This role *implicitly* depends on:
 

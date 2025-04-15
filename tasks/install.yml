@@ -5,7 +5,7 @@
 
 ---
 
-- name: Ensure Anki synchronization server paths exist
+- name: Ensure Excalidraw synchronization server paths exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -15,7 +15,7 @@
   with_items:
     - "{{ excalidraw_base_path }}"
 
-- name: Ensure Anki synchronization server support files installed
+- name: Ensure Excalidraw synchronization server support files installed
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
     dest: "{{ excalidraw_base_path }}/{{ item }}"
@@ -26,14 +26,14 @@
     - env
     - labels
 
-- name: Ensure Anki synchronization server container image is pulled
+- name: Ensure Excalidraw synchronization server container image is pulled
   community.docker.docker_image:
     name: "{{ excalidraw_container_image }}"
     source: "{{ 'pull' if ansible_version.major > 2 or ansible_version.minor > 7 else omit }}"
     force_source: "{{ excalidraw_container_image_force_pull if ansible_version.major > 2 or ansible_version.minor >= 8 else omit }}"
     force: "{{ omit if ansible_version.major > 2 or ansible_version.minor >= 8 else excalidraw_container_image_force_pull }}"
 
-- name: Ensure Anki repository is present on self-build
+- name: Ensure Excalidraw repository is present on self-build
   ansible.builtin.git:
     repo: "{{ excalidraw_container_repo }}"
     version: "{{ excalidraw_container_repo_version }}"
@@ -42,7 +42,7 @@
   register: excalidraw_git_pull_results
   when: "excalidraw_container_image_self_build | bool"
 
-- name: Ensure Anki synchronization server image is built
+- name: Ensure Excalidraw synchronization server image is built
   community.docker.docker_image:
     name: "{{ excalidraw_container_image_name }}"
     source: build
@@ -56,14 +56,14 @@
         ANKI_VERSION: "{{ excalidraw_version }}"
   when: "excalidraw_container_image_self_build | bool"
 
-- name: Ensure Anki synchronization server container network is created
+- name: Ensure Excalidraw synchronization server container network is created
   community.general.docker_network:
     enable_ipv6: "{{ devture_systemd_docker_base_ipv6_enabled }}"
     name: "{{ excalidraw_container_network }}"
     driver: bridge
     driver_options: "{{ devture_systemd_docker_base_container_networks_driver_options }}"
 
-- name: Ensure Anki synchronization server systemd service is present
+- name: Ensure Excalidraw synchronization server systemd service is present
   ansible.builtin.template:
     src: "{{ role_path }}/templates/systemd/excalidraw.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ excalidraw_identifier }}.service"

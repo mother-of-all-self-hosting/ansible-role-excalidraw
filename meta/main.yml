@@ -3,7 +3,7 @@ galaxy_info:
   company: progressiv
   role_name: excalidraw
   namespace: progressiv
-  description: Anki synchronization server
+  description: Excalidraw synchronization server
   platforms:
     - name: Debian
       versions:

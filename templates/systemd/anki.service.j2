@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 #jinja2: lstrip_blocks: "True"
 [Unit]
-Description=Anki synchronization server ({{ excalidraw_identifier }})
+Description=Excalidraw synchronization server ({{ excalidraw_identifier }})
 {% for service in excalidraw_systemd_required_services_list %}
 Requires={{ service }}
 After={{ service }}
