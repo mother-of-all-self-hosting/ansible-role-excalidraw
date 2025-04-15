@@ -1,0 +1,52 @@
+{#
+SPDX-FileCopyrightText: 2023 Slavi Pantaleev
+SPDX-FileCopyrightText: 2025 Suguru Hirahara
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+#}
+
+{% if anki_container_labels_traefik_enabled %}
+traefik.enable=true
+
+{% if anki_container_labels_traefik_docker_network %}
+traefik.docker.network={{ anki_container_labels_traefik_docker_network }}
+{% endif %}
+
+{% set middlewares = [] %}
+
+{% if anki_container_labels_traefik_path_prefix != '/' %}
+traefik.http.middlewares.{{ anki_identifier }}-slashless-redirect.redirectregex.regex=({{ anki_container_labels_traefik_path_prefix | quote }})$
+traefik.http.middlewares.{{ anki_identifier }}-slashless-redirect.redirectregex.replacement=${1}/
+{% set middlewares = middlewares + [anki_identifier + '-slashless-redirect'] %}
+{% endif %}
+
+{% if anki_container_labels_traefik_path_prefix != '/' %}
+traefik.http.middlewares.{{ anki_identifier }}-strip-prefix.stripprefix.prefixes={{ anki_container_labels_traefik_path_prefix }}
+{% set middlewares = middlewares + [anki_identifier + '-strip-prefix'] %}
+{% endif %}
+
+{% if anki_container_labels_traefik_additional_response_headers.keys() | length > 0 %}
+{% for name, value in anki_container_labels_traefik_additional_response_headers.items() %}
+traefik.http.middlewares.{{ anki_identifier }}-add-headers.headers.customresponseheaders.{{ name }}={{ value }}
+{% endfor %}
+{% set middlewares = middlewares + [anki_identifier + '-add-headers'] %}
+{% endif %}
+
+traefik.http.routers.{{ anki_identifier }}.rule={{ anki_container_labels_traefik_rule }}
+{% if anki_container_labels_traefik_priority | int > 0 %}
+traefik.http.routers.{{ anki_identifier }}.priority={{ anki_container_labels_traefik_priority }}
+{% endif %}
+traefik.http.routers.{{ anki_identifier }}.service={{ anki_identifier }}
+{% if middlewares | length > 0 %}
+traefik.http.routers.{{ anki_identifier }}.middlewares={{ middlewares | join(',') }}
+{% endif %}
+traefik.http.routers.{{ anki_identifier }}.entrypoints={{ anki_container_labels_traefik_entrypoints }}
+traefik.http.routers.{{ anki_identifier }}.tls={{ anki_container_labels_traefik_tls | to_json }}
+{% if anki_container_labels_traefik_tls %}
+traefik.http.routers.{{ anki_identifier }}.tls.certResolver={{ anki_container_labels_traefik_tls_certResolver }}
+{% endif %}
+
+traefik.http.services.{{ anki_identifier }}.loadbalancer.server.port={{ anki_container_http_port }}
+{% endif %}
+
+{{ anki_container_labels_additional_labels }}

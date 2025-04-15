@@ -1,0 +1,175 @@
+# SPDX-FileCopyrightText: 2023 - 2024 Nikita Chernyi
+# SPDX-FileCopyrightText: 2023 - 2025 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2024 Sergio Durigan Junior
+# SPDX-FileCopyrightText: 2025 MASH project contributors
+# SPDX-FileCopyrightText: 2025 Suguru Hirahara
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+# Project source code URL: https://github.com/ankitects/anki
+
+anki_enabled: true
+
+anki_identifier: anki
+anki_base_path: "{{ anki_identifier }}"
+
+# renovate: datasource=docker depName=ghcr.io/luckyturtledev/anki
+anki_version: 25.02
+
+anki_uid: ''
+anki_gid: ''
+
+# The hostname at which Anki synchronization server is served.
+anki_hostname: ''
+
+anki_scheme: https
+
+# The path at which Anki synchronization server is exposed.
+# This value must either be `/` or not end with a slash (e.g. `/anki`).
+anki_path_prefix: /
+
+anki_container_image: "{{ anki_container_image_registry_prefix }}luckyturtledev/anki:{{ anki_container_image_tag }}"
+anki_container_image_tag: "{{ anki_version }}"
+anki_container_image_registry_prefix: "{{ anki_container_image_registry_prefix_upstream }}"
+anki_container_image_registry_prefix_upstream: "{{ anki_container_image_registry_prefix_upstream_default }}"
+anki_container_image_registry_prefix_upstream_default: ghcr.io/
+anki_container_image_force_pull: "{{ anki_container_image.endswith(':latest') }}"
+
+anki_container_image_self_build: false
+anki_container_image_name: "ankitects/anki:{{ anki_container_image_tag }}"
+
+# Note this is a repository of not only Anki's synchronization server but also Anki's
+# shared backend and web components, and the Qt frontend.
+anki_container_repo: "https://github.com/ankitects/anki.git"
+
+anki_container_repo_version: "{{ anki_version if anki_version != 'latest' else 'main' }}"
+anki_container_src_files_path: "{{ anki_base_path }}/docker-src"
+
+# Controls whether the container exposes its HTTP port (tcp/80 in the container).
+#
+# Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
+anki_container_http_host_bind_port: ''
+
+# The base container network. It will be auto-created by this role if it doesn't exist already.
+anki_container_network: "{{ anki_identifier }}"
+
+# The port number in the container
+anki_container_http_port: 8080
+
+# A list of additional container networks that the container would be connected to.
+# The role does not create these networks, so make sure they already exist.
+# Use this to expose this container to another reverse proxy, which runs in a different container network.
+anki_container_additional_networks: "{{ anki_container_additional_networks_auto + anki_container_additional_networks_custom }}"
+anki_container_additional_networks_auto: []
+anki_container_additional_networks_custom: []
+
+# A list of additional "volumes" to mount in the container.
+# This list gets populated dynamically at runtime. You can provide a different default value,
+# if you wish to mount your own files into the container.
+# Contains definition objects like this: `{"type": "bind", "src": "/outside", "dst": "/inside", "options": "readonly"}.
+# See the `--mount` documentation for the `docker run` command.
+anki_container_additional_volumes: []
+
+# anki_container_labels_traefik_enabled controls whether labels to assist a Traefik reverse-proxy will be attached to the container.
+# See `../templates/labels.j2` for details.
+#
+# To inject your own other container labels, see `anki_container_labels_additional_labels`.
+anki_container_labels_traefik_enabled: true
+anki_container_labels_traefik_docker_network: "{{ anki_container_network }}"
+anki_container_labels_traefik_hostname: "{{ anki_hostname }}"
+# The path prefix must either be `/` or not end with a slash (e.g. `/anki`).
+anki_container_labels_traefik_path_prefix: "{{ anki_path_prefix }}"
+anki_container_labels_traefik_rule: "Host(`{{ anki_container_labels_traefik_hostname }}`){% if anki_container_labels_traefik_path_prefix != '/' %} && PathPrefix(`{{ anki_container_labels_traefik_path_prefix }}`){% endif %}"
+anki_container_labels_traefik_priority: 0
+anki_container_labels_traefik_entrypoints: web-secure
+anki_container_labels_traefik_tls: "{{ anki_container_labels_traefik_entrypoints != 'web' }}"
+anki_container_labels_traefik_tls_certResolver: default  # noqa var-naming
+
+# Controls which additional headers to attach to all HTTP responses.
+# To add your own custom response headers, use `anki_container_labels_traefik_additional_response_headers_custom`
+anki_container_labels_traefik_additional_response_headers: "{{ anki_container_labels_traefik_additional_response_headers_auto | combine(anki_container_labels_traefik_additional_response_headers_custom) }}"
+anki_container_labels_traefik_additional_response_headers_auto: |
+  {{
+    {}
+    | combine ({'X-XSS-Protection': anki_http_header_xss_protection} if anki_http_header_xss_protection else {})
+    | combine ({'X-Content-Type-Options': anki_http_header_content_type_options} if anki_http_header_content_type_options else {})
+    | combine ({'Content-Security-Policy': anki_http_header_content_security_policy} if anki_http_header_content_security_policy else {})
+    | combine ({'Permission-Policy': anki_http_header_content_permission_policy} if anki_http_header_content_permission_policy else {})
+    | combine ({'Strict-Transport-Security': anki_http_header_strict_transport_security} if anki_http_header_strict_transport_security and anki_container_labels_traefik_tls else {})
+  }}
+anki_container_labels_traefik_additional_response_headers_custom: {}
+
+# anki_container_labels_additional_labels contains a multiline string with additional labels to add to the container label file.
+# See `../templates/labels.j2` for details.
+#
+# Example:
+# anki_container_labels_additional_labels: |
+#   my.label=1
+#   another.label="here"
+anki_container_labels_additional_labels: ''
+
+# A list of extra arguments to pass to the container (`docker run` command)
+anki_container_extra_arguments: []
+
+# Specifies the value of the `X-XSS-Protection` header
+# Stops pages from loading when they detect reflected cross-site scripting (XSS) attacks.
+#
+# Learn more about it is here:
+# - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection
+# - https://portswigger.net/web-security/cross-site-scripting/reflected
+anki_http_header_xss_protection: "1; mode=block"
+
+# Specifies the value of the `X-Content-Type-Options` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options
+anki_http_header_content_type_options: nosniff
+
+# Specifies the value of the `Content-Security-Policy` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+anki_http_header_content_security_policy: frame-ancestors 'self'
+
+# Specifies the value of the `Permission-Policy` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permission-Policy
+anki_http_header_content_permission_policy: "{{ 'interest-cohort=()' if anki_floc_optout_enabled else '' }}"
+
+# Specifies the value of the `Strict-Transport-Security` header.
+# See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+anki_http_header_strict_transport_security: "max-age=31536000; includeSubDomains{{ '; preload' if anki_hsts_preload_enabled else '' }}"
+
+# Controls whether to send a "Permissions-Policy interest-cohort=();" header along with all responses
+#
+# Learn more about what it is here:
+# - https://www.eff.org/deeplinks/2021/03/googles-floc-terrible-idea
+# - https://paramdeo.com/blog/opting-your-website-out-of-googles-floc-network
+# - https://amifloced.org/
+#
+# Of course, a better solution is to just stop using browsers (like Chrome), which participate in such tracking practices.
+# See: `anki_content_permission_policy`
+anki_floc_optout_enabled: true
+
+# Controls if HSTS preloading is enabled
+#
+# In its strongest and recommended form, the [HSTS policy](https://www.chromium.org/hsts) includes all subdomains, and
+# indicates a willingness to be "preloaded" into browsers:
+# `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+# For more information visit:
+# - https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security
+# - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security
+# - https://hstspreload.org/#opt-in
+# See: `anki_http_header_strict_transport_security`
+anki_hsts_preload_enabled: false
+
+# List of systemd services that the Anki synchronization server systemd service depends on
+anki_systemd_required_services_list: "{{ anki_systemd_required_services_list_default + anki_systemd_required_services_list_auto + anki_systemd_required_services_list_custom }}"
+anki_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
+anki_systemd_required_services_list_auto: []
+anki_systemd_required_services_list_custom: []
+
+# List of systemd services that the Anki synchronization server systemd service wants
+anki_systemd_wanted_services_list: []
+
+anki_environment_variables_username: ''
+anki_environment_variables_password: ''
+
+# Additional environment variables.
+anki_environment_variables_additional_variables: ''
