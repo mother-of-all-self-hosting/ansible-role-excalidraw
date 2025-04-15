@@ -18,7 +18,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Setting up Anki synchronization server
 
-This is an [Ansible](https://www.ansible.com/) role which installs [a synchronization server](https://github.com/ankitects/anki/tree/main/docs/syncserver) for [Anki](https://apps.ankiweb.net) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [a synchronization server](https://github.com/excalidraw/anki/tree/main/docs/syncserver) for [Anki](https://apps.ankiweb.net) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
 Anki is a flashcard program that helps you spend more time on challenging material, and less on what you already know. This role enables to run a self-hosted synchronization server, similar to what AnkiWeb.net offers.
 
