@@ -18,21 +18,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Setting up Excalidraw
 
-This is an [Ansible](https://www.ansible.com/) role which installs [a synchronization server](https://github.com/excalidraw/excalidraw/tree/main/docs/syncserver) for [Excalidraw](https://apps.excalidrawweb.net) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs the [Excalidraw](https://excalidraw.com/) client to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
-Excalidraw is a flashcard program that helps you spend more time on challenging material, and less on what you already know. This role enables to run a self-hosted synchronization server, similar to what ExcalidrawWeb.net offers.
+Excalidraw is a free and open source virtual whiteboard for sketching hand-drawn like diagrams. It saves data locally on the browser, and the data is end-to-end encrypted.
 
-See the project's [documentation](https://docs.excalidrawweb.net/sync-server.html) to learn what the synchronization server does and why it might be useful to you.
-
-✨ Excalidraw (暗記) means "Memorize" in Japanese.
-
->[!NOTE]
->
-> This role is configured to use [this pre-built Docker image](https://github.com/luckyturtledev/docker-images/pkgs/container/excalidraw) by default. While the image itself is unofficial, it contains the official synchronization server. See [Dockerfile](https://github.com/LuckyTurtleDev/docker-images/blob/main/dockerfiles/excalidraw/Dockerfile) by the author and [this summary](https://github.com/truecharts/public/issues/17318#issue-2092096085) for (a bit complicated) history behind the Docker image.
+See the project's [documentation](https://docs.excalidraw.com/) to learn what it does and why it might be useful to you.
 
 ## Adjusting the playbook configuration
 
-To enable the server with this role, add the following configuration to your `vars.yml` file.
+To enable the client with this role, add the following configuration to your `vars.yml` file.
 
 **Note**: the path should be something like `inventory/host_vars/mash.example.com/vars.yml` if you use the [MASH Ansible playbook](https://github.com/mother-of-all-self-hosting/mash-playbook).
 
@@ -54,40 +48,13 @@ excalidraw_enabled: true
 
 ### Set the hostname
 
-To enable the server you need to set the hostname as well. To do so, add the following configuration to your `vars.yml` file. Make sure to replace `example.com` with your own value.
+To enable the client you need to set the hostname as well. To do so, add the following configuration to your `vars.yml` file. Make sure to replace `example.com` with your own value.
 
 ```yaml
 excalidraw_hostname: "example.com"
 ```
 
 After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
-
-### Set the username and password
-
-You also need to create a user to log in to the instance with a client application. To create one, add the following configuration to your `vars.yml` file. Make sure to replace `YOUR_USERNAME_HERE` and `YOUR_PASSWORD_HERE`.
-
-```yaml
-excalidraw_environment_variables_username: YOUR_USERNAME_HERE
-excalidraw_environment_variables_password: YOUR_PASSWORD_HERE
-```
-
-**Note**: if the username is changed after creating the user, a new user with the specified username will be created by running the installation command, instead of renaming the user.
-
-### Mount a directory for storing data
-
-The service requires a Docker volume to be mounted, so that the directory for storing files is shared with the host machine.
-
-To add the volume, prepare a directory on the host machine and add the following configuration to your `vars.yml` file, setting the directory path to `src`:
-
-```yaml
-excalidraw_container_additional_volumes:
-  - type: bind
-    src: /path/on/the/host
-    dst: /data
-    options:
-```
-
-Make sure permissions of the directory specified to `src` (`/path/on/the/host`).
 
 ### Extending the configuration
 
@@ -96,8 +63,6 @@ There are some additional things you may wish to configure about the component.
 Take a look at:
 
 - [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `excalidraw_environment_variables_additional_variables` variable
-
-See [here](https://github.com/LuckyTurtleDev/docker-images/blob/main/dockerfiles/excalidraw/README.md) for a complete list of the server's config options that you could put in `excalidraw_environment_variables_additional_variables`.
 
 ## Installing
 
@@ -111,9 +76,10 @@ If you use the MASH playbook, the shortcut commands with the [`just` program](ht
 
 ## Usage
 
-After running the command for installation, the synchronization server becomes available at the specified hostname like `https://example.com`.
+After running the command for installation, the Excalidraw client becomes available at the specified hostname like `https://example.com`.
 
-If using a reverse proxy to provide HTTPS access and serving the instance under a subpath, make sure to include a trailing slash when configuring Excalidraw. See [here](https://docs.excalidrawweb.net/sync-server.html#reverse-proxies) for more information.
+>[!NOTE]
+> At the moment, self-hosting your own instance doesn't support sharing or collaboration features (see [here](https://docs.excalidraw.com/docs/introduction/development#self-hosting)).
 
 ## Troubleshooting
 

@@ -14,8 +14,8 @@ excalidraw_enabled: true
 excalidraw_identifier: excalidraw
 excalidraw_base_path: "{{ excalidraw_identifier }}"
 
-# renovate: datasource=docker depName=ghcr.io/luckyturtledev/excalidraw
-excalidraw_version: 25.02
+# Only "latest" tag is available
+excalidraw_version: latest
 
 excalidraw_uid: ''
 excalidraw_gid: ''
@@ -29,21 +29,17 @@ excalidraw_scheme: https
 # This value must either be `/` or not end with a slash (e.g. `/excalidraw`).
 excalidraw_path_prefix: /
 
-excalidraw_container_image: "{{ excalidraw_container_image_registry_prefix }}luckyturtledev/excalidraw:{{ excalidraw_container_image_tag }}"
+excalidraw_container_image: "{{ excalidraw_container_image_registry_prefix }}excalidraw/excalidraw:{{ excalidraw_container_image_tag }}"
 excalidraw_container_image_tag: "{{ excalidraw_version }}"
 excalidraw_container_image_registry_prefix: "{{ excalidraw_container_image_registry_prefix_upstream }}"
 excalidraw_container_image_registry_prefix_upstream: "{{ excalidraw_container_image_registry_prefix_upstream_default }}"
-excalidraw_container_image_registry_prefix_upstream_default: ghcr.io/
+excalidraw_container_image_registry_prefix_upstream_default: docker.io/
 excalidraw_container_image_force_pull: "{{ excalidraw_container_image.endswith(':latest') }}"
 
 excalidraw_container_image_self_build: false
 excalidraw_container_image_name: "excalidraw/excalidraw:{{ excalidraw_container_image_tag }}"
-
-# Note this is a repository of not only Excalidraw's synchronization server but also Excalidraw's
-# shared backend and web components, and the Qt frontend.
 excalidraw_container_repo: "https://github.com/excalidraw/excalidraw.git"
-
-excalidraw_container_repo_version: "{{ excalidraw_version if excalidraw_version != 'latest' else 'main' }}"
+excalidraw_container_repo_version: "{{ excalidraw_version if excalidraw_version != 'latest' else 'master' }}"
 excalidraw_container_src_files_path: "{{ excalidraw_base_path }}/docker-src"
 
 # Controls whether the container exposes its HTTP port (tcp/80 in the container).
@@ -55,7 +51,7 @@ excalidraw_container_http_host_bind_port: ''
 excalidraw_container_network: "{{ excalidraw_identifier }}"
 
 # The port number in the container
-excalidraw_container_http_port: 8080
+excalidraw_container_http_port: 80
 
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
@@ -167,9 +163,6 @@ excalidraw_systemd_required_services_list_custom: []
 
 # List of systemd services that the Excalidraw systemd service wants
 excalidraw_systemd_wanted_services_list: []
-
-excalidraw_environment_variables_username: ''
-excalidraw_environment_variables_password: ''
 
 # Additional environment variables.
 excalidraw_environment_variables_additional_variables: ''

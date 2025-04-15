@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Excalidraw Ansible role
 
-This is an [Ansible](https://www.ansible.com/) role which installs [a synchronization server](https://github.com/excalidraw/excalidraw/tree/main/docs/syncserver) for [Excalidraw](https://apps.excalidrawweb.net) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs the [Excalidraw](https://excalidraw.com/) client to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
 This role *implicitly* depends on:
 

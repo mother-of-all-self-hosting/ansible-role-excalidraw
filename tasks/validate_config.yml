@@ -16,8 +16,6 @@
     - excalidraw_hostname
     - excalidraw_path_prefix
     - excalidraw_container_network
-    - excalidraw_environment_variables_username
-    - excalidraw_environment_variables_password
 
 - when: excalidraw_container_labels_traefik_enabled | bool
   block:

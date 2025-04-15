@@ -24,13 +24,18 @@ Environment="HOME={{ devture_systemd_docker_base_systemd_unit_home_path }}"
 ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} stop -t {{ devture_systemd_docker_base_container_stop_grace_time_seconds }} {{ excalidraw_identifier }} 2>/dev/null || true'
 ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ excalidraw_identifier }} 2>/dev/null || true'
 
+{#
+  Root access with write permission is required.
+  See: https://github.com/excalidraw/excalidraw/blob/master/Dockerfile
+#}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       --rm \
       --name={{ excalidraw_identifier }} \
       --log-driver=none \
-      --user={{ excalidraw_uid }}:{{ excalidraw_gid }} \
       --cap-drop=ALL \
-      --read-only \
+      --cap-add=CHOWN \
+      --cap-add=SETGID \
+      --cap-add=SETUID \
       --network={{ excalidraw_container_network }} \
       {% if excalidraw_container_http_host_bind_port %}
       -p {{ excalidraw_container_http_host_bind_port }}:{{ excalidraw_container_http_port }} \
