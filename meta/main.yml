@@ -3,7 +3,7 @@ galaxy_info:
   company: progressiv
   role_name: excalidraw
   namespace: progressiv
-  description: Excalidraw synchronization server
+  description: Excalidraw
   platforms:
     - name: Debian
       versions:

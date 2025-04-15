@@ -5,7 +5,7 @@
 
 ---
 
-- name: Ensure Excalidraw synchronization server paths exist
+- name: Ensure Excalidraw paths exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -15,7 +15,7 @@
   with_items:
     - "{{ excalidraw_base_path }}"
 
-- name: Ensure Excalidraw synchronization server support files installed
+- name: Ensure Excalidraw support files installed
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
     dest: "{{ excalidraw_base_path }}/{{ item }}"
@@ -26,7 +26,7 @@
     - env
     - labels
 
-- name: Ensure Excalidraw synchronization server container image is pulled
+- name: Ensure Excalidraw container image is pulled
   community.docker.docker_image:
     name: "{{ excalidraw_container_image }}"
     source: "{{ 'pull' if ansible_version.major > 2 or ansible_version.minor > 7 else omit }}"
@@ -42,7 +42,7 @@
   register: excalidraw_git_pull_results
   when: "excalidraw_container_image_self_build | bool"
 
-- name: Ensure Excalidraw synchronization server image is built
+- name: Ensure Excalidraw image is built
   community.docker.docker_image:
     name: "{{ excalidraw_container_image_name }}"
     source: build
@@ -56,14 +56,14 @@
         ANKI_VERSION: "{{ excalidraw_version }}"
   when: "excalidraw_container_image_self_build | bool"
 
-- name: Ensure Excalidraw synchronization server container network is created
+- name: Ensure Excalidraw container network is created
   community.general.docker_network:
     enable_ipv6: "{{ devture_systemd_docker_base_ipv6_enabled }}"
     name: "{{ excalidraw_container_network }}"
     driver: bridge
     driver_options: "{{ devture_systemd_docker_base_container_networks_driver_options }}"
 
-- name: Ensure Excalidraw synchronization server systemd service is present
+- name: Ensure Excalidraw systemd service is present
   ansible.builtin.template:
     src: "{{ role_path }}/templates/systemd/excalidraw.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ excalidraw_identifier }}.service"

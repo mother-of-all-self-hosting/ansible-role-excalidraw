@@ -20,12 +20,12 @@ excalidraw_version: 25.02
 excalidraw_uid: ''
 excalidraw_gid: ''
 
-# The hostname at which Excalidraw synchronization server is served.
+# The hostname at which Excalidraw is served.
 excalidraw_hostname: ''
 
 excalidraw_scheme: https
 
-# The path at which Excalidraw synchronization server is exposed.
+# The path at which Excalidraw is exposed.
 # This value must either be `/` or not end with a slash (e.g. `/excalidraw`).
 excalidraw_path_prefix: /
 
@@ -159,13 +159,13 @@ excalidraw_floc_optout_enabled: true
 # See: `excalidraw_http_header_strict_transport_security`
 excalidraw_hsts_preload_enabled: false
 
-# List of systemd services that the Excalidraw synchronization server systemd service depends on
+# List of systemd services that the Excalidraw systemd service depends on
 excalidraw_systemd_required_services_list: "{{ excalidraw_systemd_required_services_list_default + excalidraw_systemd_required_services_list_auto + excalidraw_systemd_required_services_list_custom }}"
 excalidraw_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
 excalidraw_systemd_required_services_list_auto: []
 excalidraw_systemd_required_services_list_custom: []
 
-# List of systemd services that the Excalidraw synchronization server systemd service wants
+# List of systemd services that the Excalidraw systemd service wants
 excalidraw_systemd_wanted_services_list: []
 
 excalidraw_environment_variables_username: ''
