@@ -12,7 +12,7 @@
 excalidraw_enabled: true
 
 excalidraw_identifier: excalidraw
-excalidraw_base_path: "{{ excalidraw_identifier }}"
+excalidraw_base_path: "/{{ excalidraw_identifier }}"
 
 # Only "latest" tag is available
 excalidraw_version: latest
