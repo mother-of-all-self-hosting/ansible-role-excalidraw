@@ -19,12 +19,12 @@
         enabled: false
         daemon_reload: true
 
-    - name: Ensure Excalidraw systemd service doesn't exist
+    - name: Ensure Excalidraw systemd service does not exist
       ansible.builtin.file:
         path: "{{ devture_systemd_docker_base_systemd_path }}/{{ excalidraw_identifier }}.service"
         state: absent
 
-    - name: Ensure Excalidraw base directory doesn't exist
+    - name: Ensure Excalidraw path does not exist
       ansible.builtin.file:
         path: "{{ excalidraw_base_path }}"
         state: absent
