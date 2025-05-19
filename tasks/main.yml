@@ -5,11 +5,14 @@
 
 ---
 
-- block:
-    - when: excalidraw_enabled | bool
+- name: Perform Excalidraw installation tasks
+  block:
+    - name: Validate Excalidraw configuration
+      when: excalidraw_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
 
-    - when: excalidraw_enabled | bool
+    - name: Install Excalidraw
+      when: excalidraw_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
   tags:
     - setup-all
@@ -17,8 +20,10 @@
     - install-all
     - install-excalidraw
 
-- block:
-    - when: not excalidraw_enabled | bool
+- name: Perform Excalidraw uninstallation tasks
+  block:
+    - name: Uninstall Excalidraw
+      when: not excalidraw_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
   tags:
     - setup-all
