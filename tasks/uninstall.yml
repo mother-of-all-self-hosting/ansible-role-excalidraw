@@ -4,13 +4,13 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-
 - name: Check existence of Excalidraw systemd service
   ansible.builtin.stat:
     path: "{{ devture_systemd_docker_base_systemd_path }}/{{ excalidraw_identifier }}.service"
   register: excalidraw_service_stat
 
-- when: excalidraw_service_stat.stat.exists | bool
+- name: Uninstall Excalidraw systemd services and files
+  when: excalidraw_service_stat.stat.exists | bool
   block:
     - name: Ensure Excalidraw systemd service is stopped
       ansible.builtin.service:

@@ -4,27 +4,25 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-
 - name: Perform Excalidraw installation tasks
-  block:
-    - name: Validate Excalidraw configuration
-      when: excalidraw_enabled | bool
-      ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
-
-    - name: Install Excalidraw
-      when: excalidraw_enabled | bool
-      ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
   tags:
     - setup-all
     - setup-excalidraw
     - install-all
     - install-excalidraw
+  block:
+    - name: Validate Excalidraw configuration
+      when: excalidraw_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
+    - name: Install Excalidraw
+      when: excalidraw_enabled | bool
+      ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
 - name: Perform Excalidraw uninstallation tasks
+  tags:
+    - setup-all
+    - setup-excalidraw
   block:
     - name: Uninstall Excalidraw
       when: not excalidraw_enabled | bool
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
-  tags:
-    - setup-all
-    - setup-excalidraw

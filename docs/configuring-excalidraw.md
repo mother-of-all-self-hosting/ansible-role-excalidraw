@@ -81,7 +81,7 @@ If you use the MASH playbook, the shortcut commands with the [`just` program](ht
 After running the command for installation, the Excalidraw client becomes available at the specified hostname like `https://example.com`.
 
 >[!NOTE]
-> At the moment, self-hosting your own instance doesn't support sharing or collaboration features (see [here](https://docs.excalidraw.com/docs/introduction/development#self-hosting)).
+> At the moment, self-hosting your own instance doesn't support sharing or collaboration features (see [this section](https://docs.excalidraw.com/docs/introduction/development#self-hosting) on the official documentation).
 
 ## Troubleshooting
 
