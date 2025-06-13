@@ -37,10 +37,10 @@ excalidraw_container_image_registry_prefix_upstream_default: docker.io/
 excalidraw_container_image_force_pull: "{{ excalidraw_container_image.endswith(':latest') }}"
 
 excalidraw_container_image_self_build: false
-excalidraw_container_image_name: "excalidraw/excalidraw:{{ excalidraw_container_repo_version }}"
-excalidraw_container_repo: "https://github.com/excalidraw/excalidraw.git"
-excalidraw_container_repo_version: "{{ excalidraw_version if excalidraw_version != 'latest' else 'master' }}"
-excalidraw_container_src_files_path: "{{ excalidraw_base_path }}/docker-src"
+excalidraw_container_image_self_build_name: "excalidraw/excalidraw:{{ excalidraw_container_image_self_build_repo_version }}"
+excalidraw_container_image_self_build_repo: "https://github.com/excalidraw/excalidraw.git"
+excalidraw_container_image_self_build_repo_version: "{{ excalidraw_version if excalidraw_version != 'latest' else 'master' }}"
+excalidraw_container_image_self_build_src_files_path: "{{ excalidraw_base_path }}/docker-src"
 
 # Controls whether the container exposes its HTTP port (tcp/80 in the container).
 #
