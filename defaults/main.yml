@@ -44,6 +44,7 @@ excalidraw_container_image_self_build_name: "excalidraw/excalidraw:{{ excalidraw
 excalidraw_container_image_self_build_repo: "https://github.com/excalidraw/excalidraw.git"
 excalidraw_container_image_self_build_repo_version: "{{ excalidraw_version if excalidraw_version != 'latest' else 'master' }}"
 excalidraw_container_image_self_build_src_files_path: "{{ excalidraw_base_path }}/docker-src"
+excalidraw_container_image_self_build_environment_buildplatform: linux/amd64
 
 excalidraw_basic_auth_apache_container_image: "{{ excalidraw_basic_auth_apache_container_image_registry_prefix }}httpd:{{ excalidraw_basic_auth_apache_container_image_tag }}"
 excalidraw_basic_auth_apache_container_image_tag: "{{ excalidraw_basic_auth_apache_version }}"
