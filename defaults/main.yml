@@ -17,6 +17,9 @@ excalidraw_base_path: "/{{ excalidraw_identifier }}"
 # Only "latest" tag is available
 excalidraw_version: latest
 
+# renovate: datasource=docker depName=httpd
+excalidraw_basic_auth_apache_version: 2.4.57-alpine3.17
+
 excalidraw_uid: ''
 excalidraw_gid: ''
 
@@ -41,6 +44,13 @@ excalidraw_container_image_self_build_name: "excalidraw/excalidraw:{{ excalidraw
 excalidraw_container_image_self_build_repo: "https://github.com/excalidraw/excalidraw.git"
 excalidraw_container_image_self_build_repo_version: "{{ excalidraw_version if excalidraw_version != 'latest' else 'master' }}"
 excalidraw_container_image_self_build_src_files_path: "{{ excalidraw_base_path }}/docker-src"
+
+excalidraw_basic_auth_apache_container_image: "{{ excalidraw_basic_auth_apache_container_image_registry_prefix }}httpd:{{ excalidraw_basic_auth_apache_container_image_tag }}"
+excalidraw_basic_auth_apache_container_image_tag: "{{ excalidraw_basic_auth_apache_version }}"
+excalidraw_basic_auth_apache_container_image_registry_prefix: "{{ excalidraw_basic_auth_apache_container_image_registry_prefix_upstream }}"
+excalidraw_basic_auth_apache_container_image_registry_prefix_upstream: "{{ excalidraw_basic_auth_apache_container_image_registry_prefix_upstream_default }}"
+excalidraw_basic_auth_apache_container_image_registry_prefix_upstream_default: docker.io/
+excalidraw_basic_auth_apache_container_image_force_pull: "{{ excalidraw_basic_auth_apache_container_image.endswith(':latest') }}"
 
 # Controls whether the container exposes its HTTP port (tcp/80 in the container).
 #
@@ -163,6 +173,15 @@ excalidraw_systemd_required_services_list_custom: []
 
 # List of systemd services that the Excalidraw systemd service wants
 excalidraw_systemd_wanted_services_list: []
+
+# excalidraw_basic_auth_enabled controls whether HTTP Basic authentication is enabled.
+# Also see `excalidraw_container_label_basicauth_users`.
+excalidraw_basic_auth_enabled: false
+excalidraw_basic_auth_username: ''
+excalidraw_basic_auth_password: ''
+# excalidraw_container_label_basicauth_users is populated at runtime based on
+# excalidraw_basic_auth_username and excalidraw_basic_auth_password
+excalidraw_container_label_basicauth_users: ''
 
 # Additional environment variables.
 excalidraw_environment_variables_additional_variables: ''

@@ -58,6 +58,18 @@ After adjusting the hostname, make sure to adjust your DNS records to point the 
 
 **Note**: hosting Excalidraw client under a subpath (by configuring the `excalidraw_path_prefix` variable) does not seem to be possible due to Excalidraw's technical limitations.
 
+### Password-protect the instance (optional)
+
+By default the instance is public and accessible to anyone. You can protect it with HTTP Basic authentication by adding the following configuration to your `vars.yml` file:
+
+```yaml
+excalidraw_basic_auth_enabled: true
+excalidraw_basic_auth_username: YOUR_USERNAME_HERE
+excalidraw_basic_auth_password: YOUR_PASSWORD_HERE
+```
+
+Replace `YOUR_USERNAME_HERE` and `YOUR_PASSWORD_HERE` with your own values. For `excalidraw_basic_auth_password`, generating a strong one is preferred (e.g. `pwgen -s 64 1`).
+
 ### Extending the configuration
 
 There are some additional things you may wish to configure about the component.
