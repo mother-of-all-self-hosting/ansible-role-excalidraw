@@ -61,6 +61,15 @@
         force: "yes"
       register: excalidraw_git_pull_results
 
+    # See: https://github.com/excalidraw/excalidraw/issues/4993
+    # Note: these variables are the ones defined by ansible-role-excalidraw-room
+    - name: Replace the value of VITE_APP_WS_SERVER_URL on .env.production with one for self-hosted Excalidraw collaboration server
+      when: "excalidraw_room_enabled | default(false) | bool"
+      ansible.builtin.replace:
+        path: "{{ excalidraw_container_image_self_build_src_files_path }}/.env.production"
+        regexp: "VITE_APP_WS_SERVER_URL=https://oss-collab.excalidraw.com"
+        replace: "VITE_APP_WS_SERVER_URL={{ excalidraw_room_scheme | default('') }}://{{ excalidraw_room_hostname | default('') }}:{{ excalidraw_room_container_http_port | default('') }}"
+
     - name: Ensure Excalidraw container image is built
       ansible.builtin.shell:
         chdir: "{{ excalidraw_container_image_self_build_src_files_path }}"

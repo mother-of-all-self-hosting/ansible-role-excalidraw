@@ -70,6 +70,23 @@ excalidraw_basic_auth_password: YOUR_PASSWORD_HERE
 
 Replace `YOUR_USERNAME_HERE` and `YOUR_PASSWORD_HERE` with your own values. For `excalidraw_basic_auth_password`, generating a strong one is preferred (e.g. `pwgen -s 64 1`).
 
+### Build the Docker image to self-host a collaboration server (optional)
+
+By building the Docker image it will be possible to have your Excalidraw's instance use your self-hosted [collaboration server](https://github.com/excalidraw/excalidraw-room), instead of the instance hosted by Excalidraw at `oss-collab.excalidraw.com`.
+
+Before building it, make sure to replace the value of `VITE_APP_WS_SERVER_URL` on `.env.production` with one for self-hosted Excalidraw collaboration server.
+
+If you use [this Ansible role (ansible-role-excalidraw-room)](https://github.com/mother-of-all-self-hosting/ansible-role-excalidraw-room) to host the collaboration server, you can set the value by adding the following configuration to your `vars.yml` file:
+
+```yaml
+excalidraw_room_enabled: true
+excalidraw_room_hostname: example.com
+```
+
+Make sure to replace the value with your own one.
+
+If the collaboration server is served with HTTP, `excalidraw_room_scheme` and `excalidraw_room_container_http_port` need configuring as well.
+
 ### Extending the configuration
 
 There are some additional things you may wish to configure about the component.
@@ -91,9 +108,6 @@ If you use the MASH playbook, the shortcut commands with the [`just` program](ht
 ## Usage
 
 After running the command for installation, the Excalidraw client becomes available at the specified hostname like `https://example.com`.
-
->[!NOTE]
-> At the moment, self-hosting your own instance doesn't support sharing or collaboration features (see [this section](https://docs.excalidraw.com/docs/introduction/development#self-hosting) on the official documentation).
 
 ## Troubleshooting
 
