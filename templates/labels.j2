@@ -14,13 +14,13 @@ traefik.docker.network={{ excalidraw_container_labels_traefik_docker_network }}
 
 {% set middlewares = [] %}
 
-{% if excalidraw_basic_auth_enabled %}
+{% if excalidraw_container_labels_middleware_basic_auth_enabled %}
 traefik.http.middlewares.{{ excalidraw_identifier }}-auth.basicauth.users={{ excalidraw_container_label_basicauth_users }}
 {% set middlewares = middlewares + [excalidraw_identifier + '-auth@docker'] %}
 {% endif %}
 
 {% if excalidraw_container_labels_traefik_path_prefix != '/' %}
-traefik.http.middlewares.{{ excalidraw_identifier }}-slashless-redirect.redirectregex.regex=({{ excalidraw_container_labels_traefik_path_prefix | quote }})$
+traefik.http.middlewares.{{ excalidraw_identifier }}-slashless-redirect.redirectregex.regex=^({{ excalidraw_container_labels_traefik_path_prefix | quote }})$
 traefik.http.middlewares.{{ excalidraw_identifier }}-slashless-redirect.redirectregex.replacement=${1}/
 {% set middlewares = middlewares + [excalidraw_identifier + '-slashless-redirect'] %}
 {% endif %}
