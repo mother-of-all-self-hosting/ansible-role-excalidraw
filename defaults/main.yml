@@ -181,7 +181,10 @@ excalidraw_systemd_required_services_list_auto: []
 excalidraw_systemd_required_services_list_custom: []
 
 # List of systemd services that the Excalidraw systemd service wants
-excalidraw_systemd_wanted_services_list: []
+excalidraw_systemd_wanted_services_list: "{{ excalidraw_systemd_wanted_services_list_default + excalidraw_systemd_wanted_services_list_auto + excalidraw_systemd_wanted_services_list_custom }}"
+excalidraw_systemd_wanted_services_list_default: []
+excalidraw_systemd_wanted_services_list_auto: []
+excalidraw_systemd_wanted_services_list_custom: []
 
 # excalidraw_basic_auth_enabled controls whether HTTP Basic authentication is enabled.
 # Also see `excalidraw_container_label_basicauth_users`.
