@@ -20,11 +20,11 @@ excalidraw_version: latest
 # renovate: datasource=docker depName=httpd
 excalidraw_basic_auth_apache_version: 2.4.57-alpine3.17
 
-excalidraw_uid: ''
-excalidraw_gid: ''
+excalidraw_uid: ""
+excalidraw_gid: ""
 
 # The hostname at which Excalidraw is served.
-excalidraw_hostname: ''
+excalidraw_hostname: ""
 
 excalidraw_scheme: https
 
@@ -56,7 +56,7 @@ excalidraw_basic_auth_apache_container_image_force_pull: "{{ excalidraw_basic_au
 # Controls whether the container exposes its HTTP port (tcp/80 in the container).
 #
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
-excalidraw_container_http_host_bind_port: ''
+excalidraw_container_http_host_bind_port: ""
 
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 excalidraw_container_network: "{{ excalidraw_identifier }}"
@@ -122,7 +122,7 @@ excalidraw_container_labels_traefik_additional_response_headers_custom: {}
 # excalidraw_container_labels_additional_labels: |
 #   my.label=1
 #   another.label="here"
-excalidraw_container_labels_additional_labels: ''
+excalidraw_container_labels_additional_labels: ""
 
 # A list of extra arguments to pass to the container (`docker run` command)
 excalidraw_container_extra_arguments: []
@@ -189,11 +189,11 @@ excalidraw_systemd_wanted_services_list_custom: []
 # excalidraw_basic_auth_enabled controls whether HTTP Basic authentication is enabled.
 # Also see `excalidraw_container_label_basicauth_users`.
 excalidraw_basic_auth_enabled: false
-excalidraw_basic_auth_username: ''
-excalidraw_basic_auth_password: ''
+excalidraw_basic_auth_username: ""
+excalidraw_basic_auth_password: ""
 # excalidraw_container_label_basicauth_users is populated at runtime based on
 # excalidraw_basic_auth_username and excalidraw_basic_auth_password
-excalidraw_container_label_basicauth_users: ''
+excalidraw_container_label_basicauth_users: ""
 
 # Additional environment variables.
-excalidraw_environment_variables_additional_variables: ''
+excalidraw_environment_variables_additional_variables: ""
