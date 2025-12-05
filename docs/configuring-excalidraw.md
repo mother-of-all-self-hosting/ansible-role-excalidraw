@@ -63,7 +63,7 @@ After adjusting the hostname, make sure to adjust your DNS records to point the 
 By default the instance is public and accessible to anyone. You can protect it with HTTP Basic authentication by adding the following configuration to your `vars.yml` file:
 
 ```yaml
-excalidraw_basic_auth_enabled: true
+excalidraw_container_labels_middleware_basic_auth_enabled: true
 excalidraw_basic_auth_username: YOUR_USERNAME_HERE
 excalidraw_basic_auth_password: YOUR_PASSWORD_HERE
 ```
