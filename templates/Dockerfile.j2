@@ -24,4 +24,4 @@ FROM joseluisq/static-web-server:latest
 
 COPY --from=build /opt/node_app/excalidraw-app/build {{ excalidraw_environment_variables_server_root }}
 
-EXPOSE "{{ radicle_explorer_container_http_port }}"
+EXPOSE "{{ excalidraw_container_http_port }}"

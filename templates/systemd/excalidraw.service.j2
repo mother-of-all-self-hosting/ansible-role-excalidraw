@@ -32,7 +32,7 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       --name={{ excalidraw_identifier }} \
       --log-driver=none \
       {% if excalidraw_container_image_self_build %}
-      --user={{ radicle_explorer_uid }}:{{ radicle_explorer_gid }} \
+      --user={{ excalidraw_uid }}:{{ excalidraw_gid }} \
       {% endif %}
       --cap-drop=ALL \
       {% if excalidraw_container_image_self_build %}
