@@ -70,9 +70,19 @@ excalidraw_basic_auth_password: YOUR_PASSWORD_HERE
 
 Replace `YOUR_USERNAME_HERE` and `YOUR_PASSWORD_HERE` with your own values. For `excalidraw_basic_auth_password`, generating a strong one is preferred (e.g. `pwgen -s 64 1`).
 
-### Build the Docker image to self-host a collaboration server (optional)
+### Using the default Docker image (optional)
 
-By building the Docker image it will be possible to have your Excalidraw's instance use your self-hosted [collaboration server](https://github.com/excalidraw/excalidraw-room), instead of the instance hosted by Excalidraw at `oss-collab.excalidraw.com`.
+Since the service uses the nginx Docker image inside the container by default (see [this line](https://github.com/excalidraw/excalidraw/blob/master/Dockerfile#L16) on `Dockerfile`) and therefore requires to use the root user, this role is configured to build the image on the source code with [this Dockerfile](../templates/Dockerfile.j2) in order to serve the application with [`static-web-server`](https://static-web-server.net/), which runs as non-root user without any additional capabilities.
+
+If you prefer simply using [the official Docker image](https://hub.docker.com/r/excalidraw/excalidraw) instead, add the following configuration to your `vars.yml` file:
+
+```yaml
+excalidraw_container_image_self_build: false
+```
+
+### Self-hosting a collaboration server
+
+By building the Docker image it will also be possible to have your Excalidraw's instance use your self-hosted [collaboration server](https://github.com/excalidraw/excalidraw-room), instead of the instance hosted by Excalidraw at `oss-collab.excalidraw.com`.
 
 Before building it, make sure to replace the value of `VITE_APP_WS_SERVER_URL` on `.env.production` with one for self-hosted Excalidraw collaboration server.
 

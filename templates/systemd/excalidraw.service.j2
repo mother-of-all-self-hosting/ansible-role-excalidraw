@@ -24,17 +24,27 @@ ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_s
 ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ excalidraw_identifier }} 2>/dev/null || true'
 
 {#
-  Root access with write permission is required.
+  When using the pulled image, root access with write permission is required.
   See: https://github.com/excalidraw/excalidraw/blob/master/Dockerfile
 #}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       --rm \
       --name={{ excalidraw_identifier }} \
       --log-driver=none \
+      {% if excalidraw_container_image_self_build %}
+      --user={{ radicle_explorer_uid }}:{{ radicle_explorer_gid }} \
+      {% endif %}
       --cap-drop=ALL \
+      {% if excalidraw_container_image_self_build %}
+      {% else %}
       --cap-add=CHOWN \
       --cap-add=SETGID \
       --cap-add=SETUID \
+      {% endif %}
+      {% if excalidraw_container_image_self_build %}
+      --read-only \
+      {% else %}
+      {% endif %}
       --network={{ excalidraw_container_network }} \
       {% if excalidraw_container_http_host_bind_port %}
       -p {{ excalidraw_container_http_host_bind_port }}:{{ excalidraw_container_http_port }} \

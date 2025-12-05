@@ -39,8 +39,8 @@ excalidraw_container_image_registry_prefix_upstream: "{{ excalidraw_container_im
 excalidraw_container_image_registry_prefix_upstream_default: docker.io/
 excalidraw_container_image_force_pull: "{{ excalidraw_container_image.endswith(':latest') }}"
 
-excalidraw_container_image_self_build: false
-excalidraw_container_image_self_build_name: "excalidraw/excalidraw:{{ excalidraw_container_image_self_build_repo_version }}"
+excalidraw_container_image_self_build: true
+excalidraw_container_image_self_build_name: "excalidraw/excalidraw-nonroot:{{ excalidraw_container_image_self_build_repo_version }}"
 excalidraw_container_image_self_build_repo: "https://github.com/excalidraw/excalidraw.git"
 excalidraw_container_image_self_build_repo_version: "{{ excalidraw_version if excalidraw_version != 'latest' else 'master' }}"
 excalidraw_container_image_self_build_src_files_path: "{{ excalidraw_base_path }}/docker-src"
@@ -62,7 +62,8 @@ excalidraw_container_http_host_bind_port: ""
 excalidraw_container_network: "{{ excalidraw_identifier }}"
 
 # The port number in the container
-excalidraw_container_http_port: 80
+# "8080" is set to SERVER_PORT for using the self-built image
+excalidraw_container_http_port: "{{ '8080' if excalidraw_container_image_self_build else '80' }}"
 
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
@@ -194,6 +195,10 @@ excalidraw_basic_auth_password: ""
 # excalidraw_container_label_basicauth_users is populated at runtime based on
 # excalidraw_basic_auth_username and excalidraw_basic_auth_password
 excalidraw_container_label_basicauth_users: ""
+
+excalidraw_environment_variables_server_log_level: error
+
+excalidraw_environment_variables_server_root: /var/public
 
 # Additional environment variables.
 excalidraw_environment_variables_additional_variables: ""

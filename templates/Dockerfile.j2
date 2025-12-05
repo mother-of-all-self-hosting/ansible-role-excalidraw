@@ -1,0 +1,27 @@
+{#
+SPDX-FileCopyrightText: 2025 Suguru Hirahara
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+#}
+
+FROM --platform=${BUILDPLATFORM} node:lts AS build
+
+WORKDIR /opt/node_app
+
+# Copy the application source code
+COPY . .
+
+RUN --mount=type=cache,target=/root/.cache/yarn \
+    yarn --network-timeout 600000
+
+ARG NODE_ENV=production
+
+# Build the application
+RUN npm_config_target_arch=${TARGETARCH} yarn build:app:docker
+
+# Use a lighter base image for the production environment
+FROM joseluisq/static-web-server:latest
+
+COPY --from=build /opt/node_app/excalidraw-app/build {{ excalidraw_environment_variables_server_root }}
+
+EXPOSE "{{ radicle_explorer_container_http_port }}"

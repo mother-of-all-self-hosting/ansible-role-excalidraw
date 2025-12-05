@@ -53,13 +53,36 @@
 - name: Run if self-building of Excalidraw container image is enabled
   when: "excalidraw_container_image_self_build | bool"
   block:
-    - name: Ensure Excalidraw repository is present on self-build
+    - name: Ensure Excalidraw repository is reset
+      # By fetching the repository, this task prevents the Docker image from being rebuilt
+      # due to the original Dockerfile being replaced with ours on every run.
       ansible.builtin.git:
         repo: "{{ excalidraw_container_image_self_build_repo }}"
         version: "{{ excalidraw_container_image_self_build_repo_version }}"
         dest: "{{ excalidraw_container_image_self_build_src_files_path }}"
         force: "yes"
+
+    - name: Ensure default Excalidraw repository is present on self-build
+      ansible.builtin.git:
+        repo: "{{ excalidraw_container_image_self_build_repo }}"
+        version: "{{ excalidraw_container_image_self_build_repo_version }}"
+        dest: "{{ excalidraw_container_image_self_build_src_files_path }}"
+        force: false
       register: excalidraw_git_pull_results
+
+    # Use a custom Docker file to let the service run as non-root user
+    - name: Ensure Excalidraw files for building container image installed
+      ansible.builtin.template:
+        src: "{{ role_path }}/templates/{{ item }}.j2"
+        dest: "{{ excalidraw_container_image_self_build_src_files_path }}/{{ item }}"
+        mode: "0640"
+        owner: "{{ excalidraw_uid }}"
+        group: "{{ excalidraw_gid }}"
+        force: true # Overwrite the default Dockerfile at https://github.com/excalidraw/excalidraw/blob/master/Dockerfile
+      with_items:
+        - .dockerignore
+        - Dockerfile
+      register: excalidraw_installation_dockerfile_results
 
     # See: https://github.com/excalidraw/excalidraw/issues/4993
     # Note: these variables are the ones defined by ansible-role-excalidraw-room
@@ -71,6 +94,7 @@
         replace: "VITE_APP_WS_SERVER_URL={{ excalidraw_room_scheme | default('') }}://{{ excalidraw_room_hostname | default('') }}:{{ excalidraw_room_container_http_port | default('') }}"
 
     - name: Ensure Excalidraw container image is built
+      when: excalidraw_git_pull_results.changed
       ansible.builtin.shell:
         chdir: "{{ excalidraw_container_image_self_build_src_files_path }}"
         cmd: |
