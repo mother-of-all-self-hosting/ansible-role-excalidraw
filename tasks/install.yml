@@ -53,24 +53,14 @@
 - name: Run if self-building of Excalidraw container image is enabled
   when: "excalidraw_container_image_self_build | bool"
   block:
-    - name: Ensure Excalidraw repository is reset
-      # By fetching the repository, this task prevents the Docker image from being rebuilt
-      # due to the original Dockerfile being replaced with ours on every run.
+    - name: Ensure Excalidraw repository is present on self-build
       ansible.builtin.git:
         repo: "{{ excalidraw_container_image_self_build_repo }}"
         version: "{{ excalidraw_container_image_self_build_repo_version }}"
         dest: "{{ excalidraw_container_image_self_build_src_files_path }}"
         force: "yes"
-
-    - name: Ensure default Excalidraw repository is present on self-build
-      ansible.builtin.git:
-        repo: "{{ excalidraw_container_image_self_build_repo }}"
-        version: "{{ excalidraw_container_image_self_build_repo_version }}"
-        dest: "{{ excalidraw_container_image_self_build_src_files_path }}"
-        force: false
       register: excalidraw_git_pull_results
 
-    # Use a custom Docker file to let the service run as non-root user
     - name: Ensure Excalidraw files for building container image installed
       ansible.builtin.template:
         src: "{{ role_path }}/templates/{{ item }}.j2"
@@ -78,11 +68,15 @@
         mode: "0640"
         owner: "{{ excalidraw_uid }}"
         group: "{{ excalidraw_gid }}"
-        force: true # Overwrite the default Dockerfile at https://github.com/excalidraw/excalidraw/blob/master/Dockerfile
+        force: true # Overwrite the default Dockerfile at https://raw.githubusercontent.com/gchq/Excalidraw/refs/heads/master/Dockerfile
       with_items:
         - .dockerignore
         - Dockerfile
-      register: excalidraw_installation_dockerfile_results
+
+    - name: Check if Excalidraw container image exists
+      ansible.builtin.command: docker images -q "{{ excalidraw_container_image_self_build_name }}"
+      register: excalidraw_docker_image_exists
+      changed_when: false
 
     # See: https://github.com/excalidraw/excalidraw/issues/4993
     # Note: these variables are the ones defined by ansible-role-excalidraw-room
@@ -93,8 +87,8 @@
         regexp: "VITE_APP_WS_SERVER_URL=https://oss-collab.excalidraw.com"
         replace: "VITE_APP_WS_SERVER_URL={{ excalidraw_room_scheme | default('') }}://{{ excalidraw_room_hostname | default('') }}:{{ excalidraw_room_container_http_port | default('') }}"
 
-    - name: Ensure Excalidraw container image is built
-      when: excalidraw_git_pull_results.changed
+    - name: Ensure Excalidraw container image is built if the container image does not exist or the repository has been updated
+      when: excalidraw_docker_image_exists.stdout == '' or (excalidraw_git_pull_results.before != excalidraw_git_pull_results.after)
       ansible.builtin.shell:
         chdir: "{{ excalidraw_container_image_self_build_src_files_path }}"
         cmd: |
@@ -104,8 +98,11 @@
           .
       environment:
         BUILDPLATFORM: "{{ excalidraw_container_image_self_build_environment_buildplatform }}"
-      register: result
-      changed_when: "'Successfully built' in result.stdout or ('writing image' in result.stderr and 'CACHED' not in result.stderr)"
+      register: excalidraw_docker_build_result
+      changed_when: >
+        'Successfully built' in excalidraw_docker_build_result.stdout or
+        ('writing image' in excalidraw_docker_build_result.stderr and 'CACHED' not in excalidraw_docker_build_result.stderr) or
+        'unpacking to' in excalidraw_docker_build_result.stderr
 
 - name: Ensure Excalidraw container network is created via community.docker.docker_network
   when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'

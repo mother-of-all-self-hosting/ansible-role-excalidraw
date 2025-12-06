@@ -43,7 +43,6 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       {% endif %}
       {% if excalidraw_container_image_self_build %}
       --read-only \
-      {% else %}
       {% endif %}
       --network={{ excalidraw_container_network }} \
       {% if excalidraw_container_http_host_bind_port %}
