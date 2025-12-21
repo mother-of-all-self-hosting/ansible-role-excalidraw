@@ -128,7 +128,7 @@ excalidraw_container_labels_additional_labels: "{{ excalidraw_container_labels_a
 excalidraw_container_labels_additional_labels_auto: {}
 excalidraw_container_labels_additional_labels_custom: {}
 
-# A list of extra arguments to pass to the container (`docker run` command)
+# A list of extra arguments to pass to the container (`docker create` command)
 excalidraw_container_extra_arguments: "{{ excalidraw_container_extra_arguments_auto + excalidraw_container_extra_arguments_custom }}"
 excalidraw_container_extra_arguments_auto: []
 excalidraw_container_extra_arguments_custom: []
