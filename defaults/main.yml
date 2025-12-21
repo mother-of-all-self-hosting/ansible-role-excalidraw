@@ -28,7 +28,7 @@ excalidraw_hostname: ""
 
 excalidraw_scheme: https
 
-# The path at which Excalidraw is exposed.
+# The path at which Excalidraw is served.
 # This value must either be `/` or not end with a slash (e.g. `/excalidraw`).
 excalidraw_path_prefix: /
 
