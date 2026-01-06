@@ -204,6 +204,8 @@ excalidraw_basic_auth_password: ""
 # excalidraw_basic_auth_username and excalidraw_basic_auth_password
 excalidraw_container_label_basicauth_users: ""
 
+# Specify a logging level
+# Valid values: debug, error, info, trace, warn
 excalidraw_environment_variables_server_log_level: error
 
 excalidraw_environment_variables_server_root: /var/public
