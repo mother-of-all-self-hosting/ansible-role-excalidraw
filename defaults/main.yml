@@ -122,11 +122,11 @@ excalidraw_container_labels_traefik_additional_response_headers_custom: {}
 #
 # Example:
 # excalidraw_container_labels_additional_labels_custom: |
-#   my.label=1
-#   another.label="here"
-excalidraw_container_labels_additional_labels: "{{ excalidraw_container_labels_additional_labels_auto | combine(excalidraw_container_labels_additional_labels_custom) }}"
-excalidraw_container_labels_additional_labels_auto: {}
-excalidraw_container_labels_additional_labels_custom: {}
+#   - my.label=1
+#   - another.label="here"
+excalidraw_container_labels_additional_labels: "{{ excalidraw_container_labels_additional_labels_auto + excalidraw_container_labels_additional_labels_custom }}"
+excalidraw_container_labels_additional_labels_auto: []
+excalidraw_container_labels_additional_labels_custom: []
 
 # A list of extra arguments to pass to the container (`docker create` command)
 excalidraw_container_extra_arguments: "{{ excalidraw_container_extra_arguments_auto + excalidraw_container_extra_arguments_custom }}"
