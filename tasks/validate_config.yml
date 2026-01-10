@@ -26,6 +26,12 @@
     - excalidraw_path_prefix
     - excalidraw_container_network
 
+- name: Fail if logging level of Static Web Server for Excalidraw is invalid
+  ansible.builtin.fail:
+    msg: >-
+      excalidraw_environment_variables_server_log_level must be 'debug', 'error', 'info', 'trace', or 'warn'
+  when: "excalidraw_environment_variables_server_log_level not in ['debug', 'error', 'info', 'trace', 'warn']"
+
 - name: Run if Traefik is enabled
   when: excalidraw_container_labels_traefik_enabled | bool
   block:
