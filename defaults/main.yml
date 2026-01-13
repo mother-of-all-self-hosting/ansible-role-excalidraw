@@ -23,10 +23,11 @@ excalidraw_basic_auth_apache_version: 2.4.57-alpine3.17
 excalidraw_uid: ""
 excalidraw_gid: ""
 
+# The scheme used for serving Excalidraw.
+excalidraw_scheme: https
+
 # The hostname at which Excalidraw is served.
 excalidraw_hostname: ""
-
-excalidraw_scheme: https
 
 # The path at which Excalidraw is served.
 # This value must either be `/` or not end with a slash (e.g. `/excalidraw`).
