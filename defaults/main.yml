@@ -54,13 +54,13 @@ excalidraw_basic_auth_apache_container_image_registry_prefix_upstream: "{{ excal
 excalidraw_basic_auth_apache_container_image_registry_prefix_upstream_default: docker.io/
 excalidraw_basic_auth_apache_container_image_force_pull: "{{ excalidraw_basic_auth_apache_container_image.endswith(':latest') }}"
 
+# The base container network. It will be auto-created by this role if it doesn't exist already.
+excalidraw_container_network: "{{ excalidraw_identifier }}"
+
 # Controls whether the container exposes its HTTP port (tcp/80 in the container).
 #
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
 excalidraw_container_http_host_bind_port: ""
-
-# The base container network. It will be auto-created by this role if it doesn't exist already.
-excalidraw_container_network: "{{ excalidraw_identifier }}"
 
 # The port number in the container
 # "8080" is set to SERVER_PORT for using the self-built image
