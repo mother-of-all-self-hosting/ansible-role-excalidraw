@@ -99,7 +99,7 @@ If the collaboration server is served with HTTP, `excalidraw_room_scheme` and `e
 
 ### Extending the configuration
 
-There are some additional things you may wish to configure about the component.
+There are some additional things you may wish to configure about the service.
 
 Take a look at:
 
