@@ -24,6 +24,7 @@
   with_items:
     - env
     - labels
+  register: excalidraw_support_files_result
 
 - name: Run if self-building of Excalidraw container image is not enabled
   when: "not excalidraw_container_image_self_build | bool"
@@ -35,19 +36,19 @@
         source: "{{ 'pull' if ansible_version.major > 2 or ansible_version.minor > 7 else omit }}"
         force_source: "{{ excalidraw_container_image_force_pull if ansible_version.major > 2 or ansible_version.minor >= 8 else omit }}"
         force: "{{ omit if ansible_version.major > 2 or ansible_version.minor >= 8 else excalidraw_container_image_force_pull }}"
-      register: result
+      register: excalidraw_container_image_pull_result
       retries: "{{ devture_playbook_help_container_retries_count }}"
       delay: "{{ devture_playbook_help_container_retries_delay }}"
-      until: result is not failed
+      until: excalidraw_container_image_pull_result is not failed
 
     - name: Ensure Excalidraw container image is pulled via ansible.builtin.command
       when: devture_systemd_docker_base_container_image_pull_method == 'command'
       ansible.builtin.command:
         cmd: "{{ devture_systemd_docker_base_host_command_docker }} pull {{ excalidraw_container_image }}"
-      register: result
+      register: excalidraw_container_image_pull_result
       retries: "{{ devture_playbook_help_container_retries_count }}"
       delay: "{{ devture_playbook_help_container_retries_delay }}"
-      until: result is not failed
+      until: excalidraw_container_image_pull_result is not failed
       changed_when: "'Downloaded newer image' in result.stdout"
 
 - name: Run if self-building of Excalidraw container image is enabled
@@ -129,3 +130,13 @@
     src: "{{ role_path }}/templates/systemd/excalidraw.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ excalidraw_identifier }}.service"
     mode: "0644"
+  register: excalidraw_systemd_service_result
+
+- name: Determine whether Excalidraw needs a restart
+  ansible.builtin.set_fact:
+    excalidraw_restart_necessary: >-
+      {{
+        excalidraw_support_files_result.changed | default(false)
+        or excalidraw_systemd_service_result.changed | default(false)
+        or excalidraw_container_image_pull_result.changed | default(false)
+      }}
