@@ -29,6 +29,7 @@
       community.docker.docker_network:
         name: "{{ excalidraw_container_network }}"
         state: absent
+      register: excalidraw_network_deletion_result
 
     - name: Ensure Excalidraw container network does not exist via ansible.builtin.command
       when: devture_systemd_docker_base_container_network_creation_method == 'command'
@@ -36,8 +37,8 @@
         cmd: >-
           {{ devture_systemd_docker_base_host_command_docker }} network rm
           {{ excalidraw_container_network }}
-      register: network_deletion_result
-      changed_when: excalidraw_container_network in network_deletion_result.stdout
+      register: excalidraw_network_deletion_result
+      changed_when: excalidraw_container_network in excalidraw_network_deletion_result.stdout
 
     - name: Ensure Excalidraw path does not exist
       ansible.builtin.file:
