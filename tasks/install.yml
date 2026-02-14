@@ -99,11 +99,11 @@
           .
       environment:
         BUILDPLATFORM: "{{ excalidraw_container_image_self_build_environment_buildplatform }}"
-      register: excalidraw_docker_build_result
+      register: excalidraw_container_image_build_result
       changed_when: >
-        'Successfully built' in excalidraw_docker_build_result.stdout or
-        ('writing image' in excalidraw_docker_build_result.stderr and 'CACHED' not in excalidraw_docker_build_result.stderr) or
-        'unpacking to' in excalidraw_docker_build_result.stderr
+        'Successfully built' in excalidraw_container_image_build_result.stdout or
+        ('writing image' in excalidraw_container_image_build_result.stderr and 'CACHED' not in excalidraw_container_image_build_result.stderr) or
+        'unpacking to' in excalidraw_container_image_build_result.stderr
 
 - name: Ensure Excalidraw container network is created via community.docker.docker_network
   when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
@@ -139,4 +139,5 @@
         excalidraw_support_files_result.changed | default(false)
         or excalidraw_systemd_service_result.changed | default(false)
         or excalidraw_container_image_pull_result.changed | default(false)
+        or excalidraw_container_image_build_result.changed | default(false)
       }}
