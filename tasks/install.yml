@@ -86,22 +86,14 @@
         regexp: "VITE_APP_WS_SERVER_URL=https://oss-collab.excalidraw.com"
         replace: "VITE_APP_WS_SERVER_URL={{ excalidraw_room_scheme | default('') }}://{{ excalidraw_room_hostname | default('') }}:{{ excalidraw_room_container_http_port | default('') }}"
 
-    - name: Ensure Excalidraw container image is built if the container image does not exist or the repository has been updated
-      when: excalidraw_docker_image_exists.stdout == '' or (excalidraw_git_pull_results.before != excalidraw_git_pull_results.after)
-      ansible.builtin.shell:
-        chdir: "{{ excalidraw_container_image_self_build_src_files_path }}"
-        cmd: |
-          {{ devture_systemd_docker_base_host_command_docker }} build \
-          -t "{{ excalidraw_container_image_self_build_name }}" \
-          -f Dockerfile \
-          .
-      environment:
-        BUILDPLATFORM: "{{ excalidraw_container_image_self_build_environment_buildplatform }}"
+    - name: Ensure Excalidraw container image is built
+      community.docker.docker_image_build:
+        name: "{{ excalidraw_container_image_self_build_name }}"
+        dockerfile: Dockerfile
+        path: "{{ excalidraw_container_image_self_build_src_files_path }}"
+        pull: true
+        rebuild: "{{ 'always' if excalidraw_git_pull_results.before != excalidraw_git_pull_results.after | bool else 'never' }}"
       register: excalidraw_container_image_build_result
-      changed_when: >
-        'Successfully built' in excalidraw_container_image_build_result.stdout or
-        ('writing image' in excalidraw_container_image_build_result.stderr and 'CACHED' not in excalidraw_container_image_build_result.stderr) or
-        'unpacking to' in excalidraw_container_image_build_result.stderr
 
 - name: Ensure Excalidraw container network is created via community.docker.docker_network
   when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
