@@ -20,7 +20,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 This is an [Ansible](https://www.ansible.com/) role which installs the [Excalidraw](https://excalidraw.com/) client to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
-Excalidraw is a free and open source virtual whiteboard for sketching hand-drawn like diagrams. It saves data locally on the browser, and the data is end-to-end encrypted.
+Excalidraw is a free and open-source virtual whiteboard for sketching hand-drawn like diagrams. It saves data locally on the browser, and the data is end-to-end encrypted.
 
 See the project's [documentation](https://docs.excalidraw.com/) to learn what Excalidraw does and why it might be useful to you.
 
