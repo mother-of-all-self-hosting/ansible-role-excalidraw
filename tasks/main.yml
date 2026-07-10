@@ -14,8 +14,6 @@
   block:
     - name: Validate Excalidraw configuration
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
-    - name: Prepare HTTP Basic authentication for Excalidraw
-      ansible.builtin.include_tasks: "{{ role_path }}/tasks/prepare_basic_auth.yml"
     - name: Install Excalidraw
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
