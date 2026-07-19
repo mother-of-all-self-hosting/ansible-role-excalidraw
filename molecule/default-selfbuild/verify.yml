@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+- name: Verify Excalidraw systemd service
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Wait for Excalidraw service to become active (up to 180s)
+      ansible.builtin.systemd:
+        name: excalidraw.service
+      register: excalidraw_service
+      until: excalidraw_service.status.ActiveState == 'active'
+      retries: 36
+      delay: 5
+
+    - name: Assert Excalidraw service is active
+      ansible.builtin.assert:
+        that: excalidraw_service.status.ActiveState == 'active'
+        fail_msg: "excalidraw.service not active ({{ excalidraw_service.status.ActiveState }})"
+        success_msg: "excalidraw.service is active"
+
+    - name: Retrieve Excalidraw service log for debugging
+      when: excalidraw_debug_service_enabled | bool
+      ansible.builtin.command:
+        cmd: journalctl -xeu excalidraw.service
+      changed_when: false
+
+    - name: Wait for Excalidraw HTTP endpoint to respond (up to 10m)
+      ansible.builtin.uri:
+        url: "http://localhost:8080/"
+        method: GET
+        status_code: [200, 302]
+        follow_redirects: none
+      register: excalidraw_endpoint
+      until: excalidraw_endpoint.status in [200, 302]
+      retries: 120
+      delay: 5
+
+    - name: Assert Excalidraw HTTP endpoint responds
+      ansible.builtin.assert:
+        that: excalidraw_endpoint.status in [200, 302]
+        fail_msg: "Excalidraw did not respond as expected ({{ excalidraw_endpoint.status | default('no response') }})"
+        success_msg: "Excalidraw responded with {{ excalidraw_endpoint.status }}"
+
+    - name: Show Excalidraw systemd service status summary
+      ansible.builtin.debug:
+        msg:
+          - "Excalidraw systemd: {{ excalidraw_service.status.ActiveState }}"
+          - "Excalidraw HTTP: {{ excalidraw_endpoint.status }}"
