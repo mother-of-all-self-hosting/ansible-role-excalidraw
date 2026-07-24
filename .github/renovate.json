@@ -17,7 +17,8 @@
         ".pre-commit-config.yaml",
         ".python-version",
         "mise.toml",
-        "molecule/requirements.txt"
+        "molecule/requirements.txt",
+        "templates/Dockerfile.j2"
       ],
       "enabled": true,
       "automerge": true,
