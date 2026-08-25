@@ -68,6 +68,16 @@ If you prefer simply using [the official Docker image](https://hub.docker.com/r/
 excalidraw_container_image_self_build: false
 ```
 
+**Note**: Excalidraw publishes no versioned releases. Its image on Docker Hub carries a single usable tag (`latest`) and no version label of its own, and self-building compiles the `master` branch. That is why `excalidraw_version` is `latest` and why there is nothing here for Renovate to propose updates for. Whichever of the two you choose, "whatever Excalidraw currently is" is what you get.
+
+#### Pinning the web server that the self-built image uses
+
+The self-built image serves the compiled application with a pinned release of [`static-web-server`](https://static-web-server.net/), so that a new major release of it cannot arrive unannounced on your next image build. Renovate proposes updates to that pin, and the Molecule test suite asserts that the version which ends up running is the one that is pinned. To choose a different one yourself, set:
+
+```yaml
+excalidraw_container_image_self_build_base_image_tag: 2.44.0
+```
+
 ### Self-hosting a collaboration server
 
 By building the Docker image it will also be possible to have your Excalidraw's instance use your self-hosted [collaboration server](https://github.com/excalidraw/excalidraw-room), instead of the instance hosted by Excalidraw at `oss-collab.excalidraw.com`.

@@ -14,7 +14,12 @@ excalidraw_enabled: true
 excalidraw_identifier: excalidraw
 excalidraw_base_path: "/{{ excalidraw_identifier }}"
 
-# Only "latest" tag is available
+# Excalidraw publishes no versioned releases of its application.
+# `excalidraw/excalidraw` on Docker Hub carries a single usable tag, `latest`, next to a handful of
+# `sha-*` tags abandoned in 2021, and the image carries no version label of its own either.
+# When self-building (the default), this value selects the git ref to build - `latest` means `master`.
+#
+# There is deliberately no `# renovate:` annotation here: there is nothing for Renovate to track.
 excalidraw_version: latest
 
 excalidraw_uid: ""
@@ -42,6 +47,20 @@ excalidraw_container_image_self_build_repo: "https://github.com/excalidraw/excal
 excalidraw_container_image_self_build_repo_version: "{{ excalidraw_version if excalidraw_version != 'latest' else 'master' }}"
 excalidraw_container_image_self_build_src_files_path: "{{ excalidraw_base_path }}/docker-src"
 excalidraw_container_image_self_build_environment_buildplatform: linux/amd64
+
+# The container image that the self-built image serves the compiled Excalidraw application from.
+#
+# Excalidraw's own Dockerfile finishes with nginx. This role builds on Static Web Server instead,
+# because it serves the same files as a non-root user with a read-only root filesystem.
+# See `../templates/Dockerfile.j2`.
+#
+# This is pinned rather than following `latest`, so that a Static Web Server major release
+# (3.x is already published as a beta) cannot arrive unannounced on the next image build,
+# and so that Renovate has a version it can propose updates for.
+excalidraw_container_image_self_build_base_image: "{{ excalidraw_container_image_self_build_base_image_name }}:{{ excalidraw_container_image_self_build_base_image_tag }}"
+excalidraw_container_image_self_build_base_image_name: docker.io/joseluisq/static-web-server
+# renovate: datasource=docker depName=joseluisq/static-web-server versioning=semver
+excalidraw_container_image_self_build_base_image_tag: 2.44.0
 
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 excalidraw_container_network: "{{ excalidraw_identifier }}"

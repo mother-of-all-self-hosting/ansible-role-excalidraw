@@ -1,5 +1,6 @@
 {#
 SPDX-FileCopyrightText: 2025 Suguru Hirahara
+SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 
 SPDX-License-Identifier: AGPL-3.0-or-later
 #}
@@ -19,8 +20,13 @@ ARG NODE_ENV=production
 # Build the application
 RUN npm_config_target_arch=${TARGETARCH} yarn build:app:docker
 
-# Use a lighter base image for the production environment
-FROM joseluisq/static-web-server:latest
+{#
+  Excalidraw's own Dockerfile finishes with nginx, which needs to start as root.
+  Static Web Server serves the same files as an unprivileged user with a read-only
+  root filesystem, which is how `../templates/systemd/excalidraw.service.j2` runs it.
+  Its configuration arrives through the SERVER_* variables in `../templates/env.j2`.
+#}
+FROM {{ excalidraw_container_image_self_build_base_image }}
 
 COPY --from=build /opt/node_app/excalidraw-app/build {{ excalidraw_environment_variables_server_root }}
 
