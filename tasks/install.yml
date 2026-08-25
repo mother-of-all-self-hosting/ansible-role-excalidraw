@@ -71,11 +71,7 @@
       with_items:
         - .dockerignore
         - Dockerfile
-
-    - name: Check if Excalidraw container image exists
-      ansible.builtin.command: docker images -q "{{ excalidraw_container_image_self_build_name }}"
-      register: excalidraw_docker_image_exists
-      changed_when: false
+      register: excalidraw_container_image_self_build_files_result
 
     # See: https://github.com/excalidraw/excalidraw/issues/4993
     # Note: these variables are the ones defined by ansible-role-excalidraw-room
@@ -85,14 +81,53 @@
         path: "{{ excalidraw_container_image_self_build_src_files_path }}/.env.production"
         regexp: "VITE_APP_WS_SERVER_URL=https://oss-collab.excalidraw.com"
         replace: "VITE_APP_WS_SERVER_URL={{ excalidraw_room_scheme | default('') }}://{{ excalidraw_room_hostname | default('') }}:{{ excalidraw_room_container_http_port | default('') }}"
+      register: excalidraw_container_image_self_build_room_url_result
 
+    # `ansible.builtin.replace` reports success when its pattern matches nothing, and the checkout
+    # above is reset from upstream on every run, so a file that came back unchanged means the line
+    # this role anchors on is gone. Without this guard, the role would quietly keep building an
+    # Excalidraw that still collaborates through oss-collab.excalidraw.com while the operator
+    # believes their own collaboration server is the one being used.
+    - name: Fail if the value of VITE_APP_WS_SERVER_URL could not be replaced
+      when: "excalidraw_room_enabled | default(false) | bool and not excalidraw_container_image_self_build_room_url_result.changed"
+      ansible.builtin.fail:
+        msg: >-
+          `VITE_APP_WS_SERVER_URL=https://oss-collab.excalidraw.com` was not found in
+          `{{ excalidraw_container_image_self_build_src_files_path }}/.env.production`.
+          Excalidraw seems to have changed how the collaboration server URL is configured,
+          so this role can no longer point the build at `excalidraw_room_hostname`.
+          Please report this to https://github.com/mother-of-all-self-hosting/ansible-role-excalidraw/issues
+
+    # `rebuild: never` means "build only if this image name does not exist yet". The image name is
+    # derived from a git ref (`master` by default) rather than from a version, so it stays the same
+    # while what it should contain changes. Everything that can change the contents is therefore
+    # listed here explicitly.
+    #
+    # This used to read `... if a != b | bool else ...`, in which `| bool` binds to `b` alone. The
+    # comparison was really `<a git sha, or None on the first run> != False`, which is true every
+    # time, so the image was rebuilt and reported as changed on every run - which in turn made
+    # `excalidraw_restart_necessary` true and restarted Excalidraw on every playbook run.
+    #
+    # `excalidraw_git_pull_results.changed` cannot be used in its place: this role writes its own
+    # Dockerfile and .dockerignore over the ones upstream ships, so the checkout always has local
+    # modifications, and `ansible.builtin.git` reports itself as changed whenever it discards any.
+    # `before != after` is what actually says whether upstream moved.
     - name: Ensure Excalidraw container image is built
       community.docker.docker_image_build:
         name: "{{ excalidraw_container_image_self_build_name }}"
         dockerfile: Dockerfile
         path: "{{ excalidraw_container_image_self_build_src_files_path }}"
         pull: true
-        rebuild: "{{ 'always' if excalidraw_git_pull_results.before != excalidraw_git_pull_results.after | bool else 'never' }}"
+        rebuild: >-
+          {{
+            'always'
+            if (
+              (excalidraw_git_pull_results.before | default(none)) != (excalidraw_git_pull_results.after | default(none))
+              or (excalidraw_container_image_self_build_files_result.changed | default(false) | bool)
+              or (excalidraw_container_image_self_build_room_url_result.changed | default(false) | bool)
+            )
+            else 'never'
+          }}
       register: excalidraw_container_image_build_result
 
 - name: Ensure Excalidraw container network is created via community.docker.docker_network
