@@ -1,53 +1,243 @@
-# SPDX-FileCopyrightText: 2026 spatterlight
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# Verifies the image this role builds itself, which is what it does by default.
+#
+# The build compiles Excalidraw from source and serves the result with Static
+# Web Server rather than nginx, so that it can run as an unprivileged user with
+# a read-only root filesystem. Two things follow, and this scenario turns both
+# into assertions:
+#
+# - Static Web Server is configured here with a fallback page, so every path
+#   answers 200 with the application shell. Status codes carry no information at
+#   all in this scenario, and the content type of a hashed asset is what does.
+# - Unlike the pre-built image, this image has a version: the one of the Static
+#   Web Server release `excalidraw_container_image_self_build_base_image_tag`
+#   pins, which is the leaf Renovate proposes updates for.
+#
+# The scenario also enables the collaboration-server rewrite, which is the only
+# configuration this role has that reaches the compiled JavaScript itself.
+
 ---
-- name: Verify Excalidraw systemd service
+- name: Verify Excalidraw
   hosts: all
   become: true
   gather_facts: false
   tasks:
-    - name: Wait for Excalidraw service to become active (up to 180s)
-      ansible.builtin.systemd:
-        name: excalidraw.service
-      register: excalidraw_service
-      until: excalidraw_service.status.ActiveState == 'active'
-      retries: 36
-      delay: 5
+    - name: Verify that Excalidraw works
+      block:
+        - name: Run the shared Excalidraw verification tasks
+          ansible.builtin.include_tasks: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/verify_tasks.yml"
 
-    - name: Assert Excalidraw service is active
-      ansible.builtin.assert:
-        that: excalidraw_service.status.ActiveState == 'active'
-        fail_msg: "excalidraw.service not active ({{ excalidraw_service.status.ActiveState }})"
-        success_msg: "excalidraw.service is active"
+        ########################################################################
+        #                                                                      #
+        # the version that is running                                          #
+        #                                                                      #
+        ########################################################################
 
-    - name: Retrieve Excalidraw service log for debugging
-      when: excalidraw_debug_service_enabled | bool
-      ansible.builtin.command:
-        cmd: journalctl -xeu excalidraw.service
-      changed_when: false
+        # Both surfaces are set by Static Web Server's own Dockerfile and both
+        # track the release: 2.42.0, 2.43.0 and 2.44.0 each report their own
+        # number, so neither is a base image's version wearing a disguise.
+        - name: Assert that Static Web Server is the version defaults/main.yml pins
+          vars:
+            excalidraw_molecule_expected_sws: "{{ excalidraw_role_defaults.excalidraw_container_image_self_build_base_image_tag }}"
+          ansible.builtin.assert:
+            that:
+              - excalidraw_molecule_container.Config.Labels['org.opencontainers.image.version'] == excalidraw_molecule_expected_sws
+              - "'SERVER_VERSION=' ~ excalidraw_molecule_expected_sws in excalidraw_molecule_container.Config.Env"
+              # Proof that the comparison discriminates: the same check against
+              # a release nobody has ever cut has to fail.
+              - excalidraw_molecule_container.Config.Labels['org.opencontainers.image.version'] != '0.0.0-never-released'
+            fail_msg: >-
+              The running image reports Static Web Server
+              '{{ excalidraw_molecule_container.Config.Labels['org.opencontainers.image.version'] | default('nothing') }}'
+              by label and {{ excalidraw_molecule_container.Config.Env | select('match', 'SERVER_VERSION=') | list }}
+              by environment, while defaults/main.yml pins
+              {{ excalidraw_molecule_expected_sws }}
+            success_msg: >-
+              The running image is Static Web Server {{ excalidraw_molecule_expected_sws }}, the
+              version `excalidraw_container_image_self_build_base_image_tag` pins
 
-    - name: Wait for Excalidraw HTTP endpoint to respond (up to 10m)
-      ansible.builtin.uri:
-        url: "http://localhost:8080/"
-        method: GET
-        status_code: [200, 302]
-        follow_redirects: none
-      register: excalidraw_endpoint
-      until: excalidraw_endpoint.status in [200, 302]
-      retries: 120
-      delay: 5
+        # The container's stdout reaches the journal through `docker start
+        # --attach` in the systemd unit, and Static Web Server announces its
+        # version and its whole configuration there as it starts. This is the
+        # process itself talking, rather than a label on the image it was built
+        # from, and it is the only place in this suite where SERVER_PORT,
+        # SERVER_ROOT, SERVER_FALLBACK_PAGE and SERVER_LOG_LEVEL are shown to
+        # have been acted upon rather than merely passed in.
+        - name: Read what Static Web Server announced as it started
+          ansible.builtin.command:
+            cmd: journalctl --no-pager -u excalidraw.service
+          register: excalidraw_startup_log
+          changed_when: false
+          until: "excalidraw_startup_log.stdout is search('static_web_server::server: static-web-server ')"
+          retries: 12
+          delay: 5
 
-    - name: Assert Excalidraw HTTP endpoint responds
-      ansible.builtin.assert:
-        that: excalidraw_endpoint.status in [200, 302]
-        fail_msg: "Excalidraw did not respond as expected ({{ excalidraw_endpoint.status | default('no response') }})"
-        success_msg: "Excalidraw responded with {{ excalidraw_endpoint.status }}"
+        - name: Assert that Static Web Server started with the configuration templates/env.j2 renders
+          vars:
+            excalidraw_molecule_server_root: "{{ excalidraw_role_defaults.excalidraw_environment_variables_server_root }}"
+            excalidraw_molecule_startup_expectations:
+              - "static-web-server {{ excalidraw_role_defaults.excalidraw_container_image_self_build_base_image_tag }}"
+              - "log level: {{ excalidraw_environment_variables_server_log_level }}"
+              - "server bound to tcp socket [::]:{{ excalidraw_container_http_port }}"
+              - 'fallback page: enabled=true, value="{{ excalidraw_molecule_server_root }}/index.html"'
+          ansible.builtin.assert:
+            that: excalidraw_molecule_startup_expectations | reject('in', excalidraw_startup_log.stdout) | list | length == 0
+            fail_msg: >-
+              Static Web Server did not report
+              {{ excalidraw_molecule_startup_expectations | reject('in', excalidraw_startup_log.stdout) | list }}.
+              What it did report was
+              {{ excalidraw_startup_log.stdout_lines | select('search', 'static_web_server') | list }}
+            success_msg: >-
+              Static Web Server reports itself as
+              {{ excalidraw_role_defaults.excalidraw_container_image_self_build_base_image_tag }},
+              bound to port {{ excalidraw_container_http_port }}, logging at
+              {{ excalidraw_environment_variables_server_log_level }}, falling back to
+              {{ excalidraw_molecule_server_root }}/index.html
 
-    - name: Show Excalidraw systemd service status summary
-      ansible.builtin.debug:
-        msg:
-          - "Excalidraw systemd: {{ excalidraw_service.status.ActiveState }}"
-          - "Excalidraw HTTP: {{ excalidraw_endpoint.status }}"
+        - name: Assert that the image is the one the role built and not one it pulled
+          ansible.builtin.assert:
+            that: excalidraw_molecule_container.Config.Image == 'excalidraw/excalidraw-nonroot:master'
+            fail_msg: >-
+              The container runs {{ excalidraw_molecule_container.Config.Image }} rather than the
+              locally built excalidraw/excalidraw-nonroot:master
+            success_msg: "The container runs the locally built excalidraw/excalidraw-nonroot:master"
+
+        ########################################################################
+        #                                                                      #
+        # the hardening the self-build makes possible                          #
+        #                                                                      #
+        ########################################################################
+
+        # `templates/systemd/excalidraw.service.j2` takes a different branch for
+        # a self-built image than for the pre-built one: no CHOWN/SETGID/SETUID
+        # capabilities, an explicit unprivileged user, and a read-only root
+        # filesystem. Nothing else in this suite would notice if that branch
+        # stopped being taken.
+        - name: Assert that the self-built image runs unprivileged and read-only
+          ansible.builtin.assert:
+            that:
+              - excalidraw_molecule_container.Config.User == (excalidraw_uid | string) ~ ':' ~ (excalidraw_gid | string)
+              - excalidraw_molecule_container.HostConfig.ReadonlyRootfs
+              - (excalidraw_molecule_container.HostConfig.CapAdd or []) | length == 0
+              - "'ALL' in (excalidraw_molecule_container.HostConfig.CapDrop or [])"
+            fail_msg: >-
+              The container runs as user '{{ excalidraw_molecule_container.Config.User }}' with
+              ReadonlyRootfs={{ excalidraw_molecule_container.HostConfig.ReadonlyRootfs }},
+              CapAdd={{ excalidraw_molecule_container.HostConfig.CapAdd }} and
+              CapDrop={{ excalidraw_molecule_container.HostConfig.CapDrop }}
+            success_msg: >-
+              The container runs as {{ excalidraw_molecule_container.Config.User }} with a
+              read-only root filesystem and no added capabilities
+
+        # The pre-built image's scenario turns the Traefik labels on and asserts
+        # what they say. This one leaves them off, so the same template must
+        # produce a container with none of them.
+        - name: Assert that no Traefik labels are attached when they are turned off
+          ansible.builtin.assert:
+            that: (excalidraw_molecule_container.Config.Labels | default({})).keys() | select('match', '^traefik[.]') | list == []
+            fail_msg: >-
+              `excalidraw_container_labels_traefik_enabled` is off, yet the container carries
+              {{ (excalidraw_molecule_container.Config.Labels | default({})).keys() | select('match', '^traefik[.]') | list }}
+            success_msg: "No Traefik labels are attached, as `excalidraw_container_labels_traefik_enabled: false` asks"
+
+        ########################################################################
+        #                                                                      #
+        # the negative control                                                 #
+        #                                                                      #
+        ########################################################################
+
+        # `SERVER_FALLBACK_PAGE` makes Static Web Server answer with the
+        # application shell for anything it cannot find, which is what an SPA
+        # needs and what makes a status-code check worthless here. Asserting the
+        # fallback rather than working around it keeps the shared content-type
+        # assertion honest: an asset that does not exist comes back as 200
+        # `text/html`, and the real one came back as JavaScript.
+        - name: Ask for paths this Excalidraw has no file for
+          ansible.builtin.uri:
+            url: "{{ excalidraw_molecule_base_url }}{{ item }}"
+            method: GET
+            status_code: [200]
+            follow_redirects: none
+            return_content: true
+          register: excalidraw_missing
+          loop:
+            - /molecule-no-such-path
+            - /assets/molecule-no-such-asset-deadbeef.js
+
+        - name: Assert that missing paths fall back to the application shell rather than to JavaScript
+          ansible.builtin.assert:
+            that:
+              - "'javascript' not in item.content_type"
+              - "'html' in item.content_type"
+              - item.content | length == excalidraw_index.content | length
+            fail_msg: >-
+              {{ item.item }} came back as '{{ item.content_type }}',
+              {{ item.content | length }} bytes. The fallback page is expected here, and the
+              content type of the real bundle only means something because of it.
+            success_msg: >-
+              {{ item.item }} falls back to the application shell as '{{ item.content_type }}',
+              which is not JavaScript
+          loop: "{{ excalidraw_missing.results }}"
+          loop_control:
+            label: "{{ item.item }}"
+
+        ########################################################################
+        #                                                                      #
+        # role configuration that reached the compiled JavaScript              #
+        #                                                                      #
+        ########################################################################
+
+        # This is the one setting of this role that has to survive a compiler.
+        # `tasks/install.yml` rewrites VITE_APP_WS_SERVER_URL in .env.production
+        # before the build, and Vite substitutes it into the bundle. Finding the
+        # scenario's own hostname in the served JavaScript proves the rewrite
+        # matched, the build consumed it, and the result is what is being
+        # served - and the second half proves the value did not merely get
+        # added alongside the upstream one.
+        - name: Assert that the compiled bundle points at the configured collaboration server
+          vars:
+            excalidraw_molecule_room_url: "{{ excalidraw_room_scheme }}://{{ excalidraw_room_hostname }}:{{ excalidraw_room_container_http_port }}"
+          ansible.builtin.assert:
+            that:
+              - excalidraw_molecule_room_url in excalidraw_bundle.content
+              - "'oss-collab.excalidraw.com' not in excalidraw_bundle.content"
+            fail_msg: >-
+              The compiled bundle does not point at {{ excalidraw_molecule_room_url }}
+              (it still mentions oss-collab.excalidraw.com:
+              {{ 'oss-collab.excalidraw.com' in excalidraw_bundle.content }}).
+              Excalidraw self-hosters would be collaborating through excalidraw.com.
+            success_msg: >-
+              The compiled bundle points at {{ excalidraw_molecule_room_url }} and no longer
+              mentions oss-collab.excalidraw.com
+
+        - name: Report what was verified
+          ansible.builtin.debug:
+            msg:
+              - "excalidraw.service: {{ excalidraw_service.status.ActiveState }}"
+              - "image: {{ excalidraw_molecule_container.Config.Image }} on Static Web Server {{ excalidraw_role_defaults.excalidraw_container_image_self_build_base_image_tag }}"
+              - "published: container {{ excalidraw_container_http_port }} on host {{ excalidraw_container_http_host_bind_port }}"
+              - "bundle: {{ excalidraw_molecule_bundle_paths | first }} as {{ excalidraw_bundle.content_type }}"
+              - "missing paths: 200 {{ excalidraw_missing.results | map(attribute='content_type') | unique | join(', ') }}, so the content type above means something"
+              - "collaboration server: {{ excalidraw_room_scheme }}://{{ excalidraw_room_hostname }}:{{ excalidraw_room_container_http_port }}"
+              - "EXCALIDRAW VERIFICATION COMPLETE"
+      rescue:
+        # Whatever went wrong, the reason is usually in the service log, and
+        # nobody reading a failed CI run has a container left to look in.
+        - name: Retrieve the Excalidraw service log
+          ansible.builtin.command:
+            cmd: journalctl --no-pager -xeu excalidraw.service
+          register: excalidraw_service_log
+          changed_when: false
+
+        - name: Show the Excalidraw service log
+          ansible.builtin.debug:
+            var: excalidraw_service_log.stdout_lines
+
+        - name: Fail because verification did not pass
+          ansible.builtin.fail:
+            msg: "Excalidraw verification failed. The service log is printed above."

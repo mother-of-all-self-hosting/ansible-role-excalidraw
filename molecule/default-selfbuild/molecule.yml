@@ -1,5 +1,6 @@
-# SPDX-FileCopyrightText: 2026 spatterlight
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -28,24 +29,54 @@ provisioner:
   inventory:
     group_vars:
       all:
-        # Helper variables
-        excalidraw_debug_service_enabled: false
-
         # Variables for Excalidraw
         excalidraw_uid: 1000
         excalidraw_gid: 1000
         excalidraw_scheme: http
         excalidraw_hostname: localhost
+
+        # Turned off here and left on in the `default` scenario, so that both
+        # branches of templates/labels.j2 get exercised.
         excalidraw_container_labels_traefik_enabled: false
-        excalidraw_container_http_host_bind_port: 8080
+
+        # Deliberately not the 8080 the role defaults to for a self-built image.
+        # Static Web Server binds whatever SERVER_PORT says, so a port that only
+        # this scenario would pick tells a value which reached the process from
+        # one which merely reached the container.
+        excalidraw_container_http_port: 24539
+        excalidraw_container_http_host_bind_port: 24538
+
+        # Static Web Server announces its configuration on startup at this
+        # level, which is how verify.yml reads back what the process actually
+        # bound and loaded. The `default` scenario sets `warn` instead.
+        excalidraw_environment_variables_server_log_level: debug
 
         # Test self-building
         excalidraw_container_image_self_build: true
+
+        # Variables `ansible-role-excalidraw-room` would define. Nothing is
+        # deployed for them here - they exist so that the role rewrites
+        # VITE_APP_WS_SERVER_URL before the build, and verify.yml can look for
+        # the result in the JavaScript that gets served.
+        excalidraw_room_enabled: true
+        excalidraw_room_scheme: wss
+        excalidraw_room_hostname: collab.molecule.invalid
+        excalidraw_room_container_http_port: 24540
+
+        # Variables for the verification suite
+        excalidraw_molecule_base_url: http://127.0.0.1:24538
   env:
     # Workaround for https://github.com/ansible/molecule/issues/4391
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/..:/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:~/.ansible/roles
 scenario:
-  # See: https://docs.ansible.com/projects/molecule/configuration/?h=test_sequence#scenario
+  # See: https://docs.ansible.com/projects/molecule/configuration/#scenario
+  #
+  # The idempotence step is left out on purpose. This role writes its own
+  # Dockerfile and .dockerignore over the ones Excalidraw ships, and rewrites
+  # VITE_APP_WS_SERVER_URL in the checkout, so `ansible.builtin.git` finds local
+  # modifications to discard on every run and reports itself changed. Making the
+  # self-build idempotent needs the rebuild decision to be driven by the state of
+  # the built image rather than by the changed flags of the tasks before it.
   test_sequence:
     - dependency
     - cleanup
@@ -54,8 +85,6 @@ scenario:
     - create
     - prepare
     - converge
-    # Disable idempotence test for now
-    # - idempotence
     - side_effect
     - verify
     - cleanup

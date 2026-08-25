@@ -1,53 +1,170 @@
-# SPDX-FileCopyrightText: 2026 spatterlight
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+# Verifies the pre-built image Excalidraw publishes on Docker Hub.
+#
+# That image ends in nginx with its stock configuration and no SPA rewrite, so
+# unlike the self-build scenario it really does answer 404 for a path it has no
+# file for. This scenario asserts exactly that, which is both the negative
+# control for its own probes and the thing that would notice if Excalidraw ever
+# changed the server its image is built on.
+
 ---
-- name: Verify Excalidraw systemd service
+- name: Verify Excalidraw
   hosts: all
   become: true
   gather_facts: false
   tasks:
-    - name: Wait for Excalidraw service to become active (up to 180s)
-      ansible.builtin.systemd:
-        name: excalidraw.service
-      register: excalidraw_service
-      until: excalidraw_service.status.ActiveState == 'active'
-      retries: 36
-      delay: 5
+    - name: Verify that Excalidraw works
+      block:
+        - name: Run the shared Excalidraw verification tasks
+          ansible.builtin.include_tasks: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/verify_tasks.yml"
 
-    - name: Assert Excalidraw service is active
-      ansible.builtin.assert:
-        that: excalidraw_service.status.ActiveState == 'active'
-        fail_msg: "excalidraw.service not active ({{ excalidraw_service.status.ActiveState }})"
-        success_msg: "excalidraw.service is active"
+        ########################################################################
+        #                                                                      #
+        # the image is the one defaults/main.yml names                         #
+        #                                                                      #
+        ########################################################################
 
-    - name: Retrieve Excalidraw service log for debugging
-      when: excalidraw_debug_service_enabled | bool
-      ansible.builtin.command:
-        cmd: journalctl -xeu excalidraw.service
-      changed_when: false
+        # Excalidraw publishes no versions, so there is no version to assert
+        # here: `excalidraw/excalidraw` carries a single usable tag and the image
+        # has no version label of its own. The most that can be checked is that
+        # the tag the role resolved is the tag that is running.
+        - name: Assert that the running container is the image defaults/main.yml resolves to
+          ansible.builtin.assert:
+            that:
+              - excalidraw_molecule_container.Config.Image is search('excalidraw/excalidraw:')
+              - excalidraw_molecule_container.Config.Image.endswith(':' ~ excalidraw_role_defaults.excalidraw_version)
+            fail_msg: >-
+              The container runs {{ excalidraw_molecule_container.Config.Image }}, which is not
+              excalidraw/excalidraw at the '{{ excalidraw_role_defaults.excalidraw_version }}' tag
+              `excalidraw_version` names
+            success_msg: >-
+              The container runs {{ excalidraw_molecule_container.Config.Image }}, the tag
+              `excalidraw_version` names
 
-    - name: Wait for Excalidraw HTTP endpoint to respond (up to 10m)
-      ansible.builtin.uri:
-        url: "http://localhost:80/"
-        method: GET
-        status_code: [200, 302]
-        follow_redirects: none
-      register: excalidraw_endpoint
-      until: excalidraw_endpoint.status in [200, 302]
-      retries: 120
-      delay: 5
+        ########################################################################
+        #                                                                      #
+        # the labels the role renders for Traefik                              #
+        #                                                                      #
+        ########################################################################
 
-    - name: Assert Excalidraw HTTP endpoint responds
-      ansible.builtin.assert:
-        that: excalidraw_endpoint.status in [200, 302]
-        fail_msg: "Excalidraw did not respond as expected ({{ excalidraw_endpoint.status | default('no response') }})"
-        success_msg: "Excalidraw responded with {{ excalidraw_endpoint.status }}"
+        # This scenario turns the Traefik labels on (the self-build one leaves
+        # them off, and asserts they are absent) so that `templates/labels.j2`
+        # is exercised. No Traefik is running to read them, but the labels are
+        # rendered from the role's variables and reach the container through
+        # `--label-file`, so what they say is a statement about the role.
+        - name: Assert that the Traefik labels the role renders reached the container
+          vars:
+            excalidraw_molecule_labels: "{{ excalidraw_molecule_container.Config.Labels }}"
+          ansible.builtin.assert:
+            that:
+              - excalidraw_molecule_labels['traefik.enable'] == 'true'
+              - excalidraw_molecule_labels['traefik.docker.network'] == 'excalidraw'
+              - excalidraw_molecule_labels['traefik.http.routers.excalidraw.rule'] == 'Host(`' ~ excalidraw_hostname ~ '`)'
+              - excalidraw_molecule_labels['traefik.http.routers.excalidraw.entrypoints'] == excalidraw_container_labels_traefik_entrypoints
+              - excalidraw_molecule_labels['traefik.http.services.excalidraw.loadbalancer.server.port'] == excalidraw_container_http_port | string
+              - excalidraw_molecule_labels['traefik.http.middlewares.excalidraw-add-response-headers.headers.customresponseheaders.X-Content-Type-Options'] == 'nosniff'
+            fail_msg: "The container's labels are {{ excalidraw_molecule_labels }}"
+            success_msg: >-
+              The container carries the Traefik router, service and response-header labels
+              templates/labels.j2 renders, routing `{{ excalidraw_hostname }}` to container port
+              {{ excalidraw_container_http_port }}
 
-    - name: Show Excalidraw systemd service status summary
-      ansible.builtin.debug:
-        msg:
-          - "Excalidraw systemd: {{ excalidraw_service.status.ActiveState }}"
-          - "Excalidraw HTTP: {{ excalidraw_endpoint.status }}"
+        ########################################################################
+        #                                                                      #
+        # the negative control                                                 #
+        #                                                                      #
+        ########################################################################
+
+        # The shared tasks proved that a hashed asset comes back as JavaScript.
+        # This proves that the check discriminates: on this server an asset that
+        # does not exist is refused outright rather than answered with the
+        # application shell. Should Excalidraw ever swap nginx's stock
+        # configuration for one that rewrites unknown paths to /index.html, this
+        # is what notices, and the shared content-type assertion is what remains
+        # true afterwards.
+        - name: Ask for paths this Excalidraw has no file for
+          ansible.builtin.uri:
+            url: "{{ excalidraw_molecule_base_url }}{{ item }}"
+            method: GET
+            status_code: [404]
+            follow_redirects: none
+          register: excalidraw_missing
+          loop:
+            - /molecule-no-such-path
+            - /assets/molecule-no-such-asset-deadbeef.js
+
+        - name: Assert that this Excalidraw refuses paths it has no file for
+          ansible.builtin.assert:
+            that: item.status == 404
+            fail_msg: >-
+              {{ item.item }} answered {{ item.status }}. This image is expected to serve files and
+              nothing else; a server answering for every path would make the assertions above
+              meaningless.
+            success_msg: "{{ item.item }} is refused with 404, as a plain file server should"
+          loop: "{{ excalidraw_missing.results }}"
+          loop_control:
+            label: "{{ item.item }}"
+
+        - name: Assert that the server behind the pre-built image is nginx
+          ansible.builtin.assert:
+            that:
+              - excalidraw_index.server is defined
+              - excalidraw_index.server.startswith('nginx/')
+            fail_msg: >-
+              The pre-built Excalidraw image answered with Server
+              '{{ excalidraw_index.server | default('no Server header') }}' rather than nginx.
+              The 404 expectations above are written for nginx's stock configuration and need
+              re-checking against whatever this now is.
+            success_msg: "The pre-built image serves through {{ excalidraw_index.server }}"
+
+        ########################################################################
+        #                                                                      #
+        # the bundle carries the value the self-build scenario replaces        #
+        #                                                                      #
+        ########################################################################
+
+        # `tasks/install.yml` rewrites this exact string in .env.production when
+        # `excalidraw_room_enabled` is on, and Vite compiles the result into the
+        # bundle. Asserting that an untouched Excalidraw build still carries it
+        # is what keeps that rewrite from silently anchoring on nothing.
+        - name: Assert that an untouched build still points at Excalidraw's own collaboration server
+          ansible.builtin.assert:
+            that: "'oss-collab.excalidraw.com' in excalidraw_bundle.content"
+            fail_msg: >-
+              The compiled bundle does not mention oss-collab.excalidraw.com. Excalidraw has
+              changed how the collaboration server URL is built in, so the VITE_APP_WS_SERVER_URL
+              rewrite in tasks/install.yml no longer has anything to anchor on.
+            success_msg: >-
+              The compiled bundle carries oss-collab.excalidraw.com, the value the self-build
+              scenario replaces with a self-hosted collaboration server
+
+        - name: Report what was verified
+          ansible.builtin.debug:
+            msg:
+              - "excalidraw.service: {{ excalidraw_service.status.ActiveState }}"
+              - "image: {{ excalidraw_molecule_container.Config.Image }} behind {{ excalidraw_index.server }}"
+              - "published: container {{ excalidraw_container_http_port }} on host {{ excalidraw_container_http_host_bind_port }}"
+              - "bundle: {{ excalidraw_molecule_bundle_paths | first }} as {{ excalidraw_bundle.content_type }}"
+              - "missing paths: 404, so the content type above means something"
+              - "EXCALIDRAW VERIFICATION COMPLETE"
+      rescue:
+        # Whatever went wrong, the reason is usually in the service log, and
+        # nobody reading a failed CI run has a container left to look in.
+        - name: Retrieve the Excalidraw service log
+          ansible.builtin.command:
+            cmd: journalctl --no-pager -xeu excalidraw.service
+          register: excalidraw_service_log
+          changed_when: false
+
+        - name: Show the Excalidraw service log
+          ansible.builtin.debug:
+            var: excalidraw_service_log.stdout_lines
+
+        - name: Fail because verification did not pass
+          ansible.builtin.fail:
+            msg: "Excalidraw verification failed. The service log is printed above."

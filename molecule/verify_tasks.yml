@@ -1,0 +1,186 @@
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
+# SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# The part of the verification suite that both Excalidraw scenarios run.
+#
+# Excalidraw is a single-page application and nothing else: a compiled bundle of
+# HTML, CSS and JavaScript handed to a web server, with no backend of its own.
+# Drawings live in the browser, and collaboration - where it is enabled at all -
+# goes to a separate server that `ansible-role-excalidraw-room` deploys. That
+# shapes what this suite can honestly claim:
+#
+# - it can prove that the web server the role configured serves Excalidraw's
+#   compiled bundle, on the port the role was told to publish
+# - it can prove that values only this role's templates could have produced
+#   reached the container
+# - it can prove which version of the server that is, where a version exists
+# - it cannot say anything about how the application behaves once a browser runs
+#   it, because nothing here executes any JavaScript
+#
+# Every claim below is written so that it can fail. "It answered 200" is worth
+# nothing here in particular: the self-build scenario's server is configured
+# with a fallback page, so it answers 200 with the application shell for every
+# path in existence, including all the ones that do not exist.
+
+---
+- name: Include the role's default variables under a separate name
+  ansible.builtin.include_vars:
+    # Only leaf values may be read out of this. Anything written in terms of
+    # another variable would be resolved in the surrounding scope, where the
+    # role's variables do not exist. Loading it under a name of its own also
+    # keeps it from outranking the values this scenario deliberately tuned.
+    file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+    name: excalidraw_role_defaults
+
+- name: Wait for the Excalidraw systemd service to become active
+  ansible.builtin.systemd_service:
+    name: excalidraw.service
+  register: excalidraw_service
+  until: excalidraw_service.status.ActiveState == 'active'
+  retries: 36
+  delay: 5
+
+# `Restart=always` in the systemd unit means that even a container which crashes
+# and gets restarted reads as active here, so this is a precondition rather than
+# a result.
+- name: Assert that the Excalidraw systemd service is active
+  ansible.builtin.assert:
+    that: excalidraw_service.status.ActiveState == 'active'
+    fail_msg: "excalidraw.service is {{ excalidraw_service.status.ActiveState }}, not active"
+    success_msg: "excalidraw.service is active"
+
+########################################################################
+#                                                                      #
+# what the role handed to Docker                                       #
+#                                                                      #
+########################################################################
+
+- name: Inspect the Excalidraw container
+  ansible.builtin.command:
+    cmd: docker inspect excalidraw
+  register: excalidraw_container_inspect
+  changed_when: false
+  retries: 12
+  delay: 5
+  until: excalidraw_container_inspect.rc == 0
+
+- name: Set facts about the Excalidraw container
+  ansible.builtin.set_fact:
+    excalidraw_molecule_container: "{{ excalidraw_container_inspect.stdout | from_json | first }}"
+
+- name: Assert that Excalidraw is running on the container network the role creates
+  ansible.builtin.assert:
+    that: excalidraw_molecule_container.NetworkSettings.Networks.keys() | list == ['excalidraw']
+    fail_msg: >-
+      The container is attached to
+      {{ excalidraw_molecule_container.NetworkSettings.Networks.keys() | list }},
+      not to the single `excalidraw` network `excalidraw_container_network` names
+    success_msg: "The container is attached to the `excalidraw` container network and to nothing else"
+
+# `excalidraw_container_http_host_bind_port` is a value nothing but this role
+# supplies, and the mapping has to name the port the server inside the container
+# is expected to listen on. A role that published the wrong container port would
+# still produce a container, a mapping and an active unit.
+- name: Assert that the container publishes the port the scenario asked for
+  vars:
+    excalidraw_molecule_published: >-
+      {{ excalidraw_molecule_container.NetworkSettings.Ports.get(excalidraw_container_http_port | string ~ '/tcp') or [] }}
+  ansible.builtin.assert:
+    that:
+      - excalidraw_molecule_published | length > 0
+      - excalidraw_molecule_published | map(attribute='HostPort') | unique | list == [excalidraw_container_http_host_bind_port | string]
+    fail_msg: >-
+      Container port {{ excalidraw_container_http_port }} is published as
+      {{ excalidraw_molecule_published }}, and not on host port
+      {{ excalidraw_container_http_host_bind_port }}.
+      The container publishes {{ excalidraw_molecule_container.NetworkSettings.Ports }}.
+    success_msg: >-
+      Container port {{ excalidraw_container_http_port }} is published on host port
+      {{ excalidraw_container_http_host_bind_port }}
+
+# The environment file is written by `templates/env.j2` and reaches the container
+# through `--env-file` in the systemd unit. Whether the server acts on it is a
+# question for the individual scenarios: Static Web Server does, nginx does not.
+- name: Assert that the role's environment file reached the container
+  vars:
+    excalidraw_molecule_env: "{{ excalidraw_molecule_container.Config.Env }}"
+    excalidraw_molecule_server_root: "{{ excalidraw_role_defaults.excalidraw_environment_variables_server_root }}"
+  ansible.builtin.assert:
+    that:
+      - "'SERVER_ROOT=' ~ excalidraw_molecule_server_root in excalidraw_molecule_env"
+      - "'SERVER_FALLBACK_PAGE=' ~ excalidraw_molecule_server_root ~ '/index.html' in excalidraw_molecule_env"
+      - "'SERVER_PORT=' ~ excalidraw_container_http_port | string in excalidraw_molecule_env"
+      - "'TZ=' ~ excalidraw_role_defaults.excalidraw_environment_variables_tz in excalidraw_molecule_env"
+      - "'SERVER_LOG_LEVEL=' ~ excalidraw_environment_variables_server_log_level in excalidraw_molecule_env"
+    fail_msg: "The container's environment is {{ excalidraw_molecule_env }}"
+    success_msg: "The container's environment carries the SERVER_* and TZ values templates/env.j2 renders"
+
+########################################################################
+#                                                                      #
+# what the web server is actually serving                              #
+#                                                                      #
+########################################################################
+
+- name: Fetch the Excalidraw application shell
+  ansible.builtin.uri:
+    url: "{{ excalidraw_molecule_base_url }}/"
+    method: GET
+    status_code: [200]
+    follow_redirects: none
+    return_content: true
+  register: excalidraw_index
+  until: excalidraw_index.status == 200
+  retries: 60
+  delay: 5
+
+- name: Find the script the Excalidraw application shell loads
+  ansible.builtin.set_fact:
+    excalidraw_molecule_bundle_paths: "{{ excalidraw_index.content | regex_findall('src=\"(/assets/[^\"]+\\.js)\"') }}"
+
+# A web server pointed at an empty or wrong document root, or one still serving
+# the welcome page of its own image, gets past a status-code check untroubled.
+- name: Assert that the document root holds Excalidraw and not something else
+  ansible.builtin.assert:
+    that:
+      - excalidraw_index.content is search('<title>[^<]*Excalidraw')
+      - excalidraw_index.content is not search('Welcome to nginx')
+      - excalidraw_molecule_bundle_paths | length == 1
+    fail_msg: >-
+      The page served at {{ excalidraw_molecule_base_url }}/ does not look like Excalidraw's
+      application shell. It is {{ excalidraw_index.content | length }} bytes long and loads
+      the scripts {{ excalidraw_molecule_bundle_paths }}.
+    success_msg: >-
+      {{ excalidraw_molecule_base_url }}/ serves Excalidraw's application shell, which loads
+      {{ excalidraw_molecule_bundle_paths | first }}
+
+- name: Fetch the compiled Excalidraw bundle the application shell loads
+  ansible.builtin.uri:
+    url: "{{ excalidraw_molecule_base_url }}{{ excalidraw_molecule_bundle_paths | first }}"
+    method: GET
+    status_code: [200]
+    follow_redirects: none
+    return_content: true
+  register: excalidraw_bundle
+
+# The content type is the assertion that survives a fallback page. Asking for a
+# hashed asset that does not exist returns the application shell under
+# `text/html` (Static Web Server) or a 404 (nginx); either way it is not
+# JavaScript, and each scenario asserts which of the two it is looking at.
+#
+# The substring is deliberate: nginx says `application/javascript` here while
+# Static Web Server says `text/javascript`.
+- name: Assert that the bundle is served as JavaScript
+  ansible.builtin.assert:
+    that:
+      - "'javascript' in excalidraw_bundle.content_type"
+      - excalidraw_bundle.content | length > 100000
+    fail_msg: >-
+      {{ excalidraw_molecule_bundle_paths | first }} came back as
+      '{{ excalidraw_bundle.content_type }}', {{ excalidraw_bundle.content | length }} bytes.
+      A fallback page would look exactly like this.
+    success_msg: >-
+      {{ excalidraw_molecule_bundle_paths | first }} is served as
+      '{{ excalidraw_bundle.content_type }}', {{ excalidraw_bundle.content | length }} bytes

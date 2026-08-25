@@ -1,5 +1,6 @@
-# SPDX-FileCopyrightText: 2026 spatterlight
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -28,19 +29,38 @@ provisioner:
   inventory:
     group_vars:
       all:
-        # Helper variables
-        excalidraw_debug_service_enabled: false
-
         # Variables for Excalidraw
         excalidraw_uid: 1000
         excalidraw_gid: 1000
         excalidraw_scheme: http
-        excalidraw_hostname: localhost
-        excalidraw_container_labels_traefik_enabled: false
-        excalidraw_container_http_host_bind_port: 80
+        # Never resolved anywhere. It only has to be a value nothing but this
+        # scenario would produce, so that verify.yml can recognize it in the
+        # Traefik labels the role renders.
+        excalidraw_hostname: excalidraw.molecule.invalid
 
-        # Disable self-building
+        # Left on here and turned off in the self-build scenario, so that both
+        # branches of templates/labels.j2 get exercised. No Traefik is running.
+        excalidraw_container_labels_traefik_enabled: true
+        excalidraw_container_labels_traefik_entrypoints: web
+
+        # Dictated by the image rather than by the role: Excalidraw's pre-built
+        # image is nginx with its stock configuration, listening on port 80.
+        # It is spelled out because verify.yml reads it and the role's own
+        # default for it is written in terms of another variable.
+        excalidraw_container_http_port: 80
+        excalidraw_container_http_host_bind_port: 24537
+
+        # Not the role's default, so that verify.yml can tell a value which came
+        # from templates/env.j2 from one that merely looks like it did. nginx
+        # ignores this variable; the self-build scenario asserts that Static Web
+        # Server does not.
+        excalidraw_environment_variables_server_log_level: warn
+
+        # Test the pre-built image Excalidraw publishes
         excalidraw_container_image_self_build: false
+
+        # Variables for the verification suite
+        excalidraw_molecule_base_url: http://127.0.0.1:24537
   env:
     # Workaround for https://github.com/ansible/molecule/issues/4391
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/..:/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:~/.ansible/roles
