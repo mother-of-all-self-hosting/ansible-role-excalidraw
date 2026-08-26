@@ -9,7 +9,7 @@
     "What the suite cannot see, and what a reviewer of a red build should keep in mind: nothing here executes any JavaScript, so a bundle that is served correctly and misbehaves in a browser would pass. And because the self-build compiles Excalidraw's unpinned `master`, a failure on an automerge branch may belong to upstream rather than to the bump. That direction fails closed and blocks the merge, which is the right way round."
   ],
   "extends": [
-    "github>mother-of-all-self-hosting/renovate-config#v1.0.0",
-    "github>mother-of-all-self-hosting/renovate-config//patch-automerge#v1.0.0"
+    "github>mother-of-all-self-hosting/renovate-config#v1.1.0",
+    "github>mother-of-all-self-hosting/renovate-config//patch-automerge#v1.1.0"
   ]
 }
