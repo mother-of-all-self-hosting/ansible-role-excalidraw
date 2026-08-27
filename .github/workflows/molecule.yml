@@ -40,17 +40,9 @@ jobs:
       matrix:
         distro:
           - ubuntu2604
-          - debian13
         scenario:
           - default
           - default-selfbuild
-        # The self-build scenario compiles Excalidraw with Node inside a
-        # container and serves the result from another one. Neither step cares
-        # which distribution the Docker daemon happens to run on, so building it
-        # a second time tests nothing the first run has not.
-        exclude:
-          - distro: debian13
-            scenario: default-selfbuild
       fail-fast: false
 
     env:
