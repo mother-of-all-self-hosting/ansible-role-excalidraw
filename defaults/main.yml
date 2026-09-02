@@ -15,10 +15,6 @@ excalidraw_identifier: excalidraw
 excalidraw_base_path: "/{{ excalidraw_identifier }}"
 
 # Excalidraw publishes no versioned releases of its application.
-# `excalidraw/excalidraw` on Docker Hub carries a single usable tag, `latest`, next to a handful of
-# `sha-*` tags abandoned in 2021, and the image carries no version label of its own either.
-# When self-building (the default), this value selects the git ref to build - `latest` means `master`.
-#
 # There is deliberately no `# renovate:` annotation here: there is nothing for Renovate to track.
 excalidraw_version: latest
 
