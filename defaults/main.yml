@@ -14,7 +14,7 @@ excalidraw_enabled: true
 excalidraw_identifier: excalidraw
 excalidraw_base_path: "/{{ excalidraw_identifier }}"
 
-# Excalidraw publishes no versioned releases of its application.
+# Excalidraw publishes no versioned releases.
 # There is deliberately no `# renovate:` annotation here: there is nothing for Renovate to track.
 excalidraw_version: latest
 
