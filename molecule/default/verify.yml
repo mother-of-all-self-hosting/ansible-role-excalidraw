@@ -151,10 +151,8 @@
               - "published: container {{ excalidraw_container_http_port }} on host {{ excalidraw_container_http_host_bind_port }}"
               - "bundle: {{ excalidraw_molecule_bundle_paths | first }} as {{ excalidraw_bundle.content_type }}"
               - "missing paths: 404, so the content type above means something"
-              - "EXCALIDRAW VERIFICATION COMPLETE"
       rescue:
-        # Whatever went wrong, the reason is usually in the service log, and
-        # nobody reading a failed CI run has a container left to look in.
+        # Whatever went wrong, the reason is almost always in the service log.
         - name: Retrieve the Excalidraw service log
           ansible.builtin.command:
             cmd: journalctl --no-pager -xeu excalidraw.service
