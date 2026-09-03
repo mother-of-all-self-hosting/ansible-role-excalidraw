@@ -215,15 +215,15 @@
               The compiled bundle points at {{ excalidraw_molecule_room_url }} and no longer
               mentions oss-collab.excalidraw.com
 
-        - name: Report what was verified
+        - name: Show Excalidraw verification summary
           ansible.builtin.debug:
             msg:
-              - "excalidraw.service: {{ excalidraw_service.status.ActiveState }}"
-              - "image: {{ excalidraw_molecule_container.Config.Image }} on Static Web Server {{ excalidraw_role_defaults.excalidraw_container_image_self_build_base_image_tag }}"
-              - "published: container {{ excalidraw_container_http_port }} on host {{ excalidraw_container_http_host_bind_port }}"
-              - "bundle: {{ excalidraw_molecule_bundle_paths | first }} as {{ excalidraw_bundle.content_type }}"
-              - "missing paths: 200 {{ excalidraw_missing.results | map(attribute='content_type') | unique | join(', ') }}, so the content type above means something"
-              - "collaboration server: {{ excalidraw_room_scheme }}://{{ excalidraw_room_hostname }}:{{ excalidraw_room_container_http_port }}"
+              - "Excalidraw systemd: {{ excalidraw_service.status.ActiveState }}"
+              - "Excalidraw image: {{ excalidraw_molecule_container.Config.Image }} on Static Web Server {{ excalidraw_role_defaults.excalidraw_container_image_self_build_base_image_tag }}"
+              - "Excalidraw published: container {{ excalidraw_container_http_port }} on host {{ excalidraw_container_http_host_bind_port }}"
+              - "Excalidraw bundle: {{ excalidraw_molecule_bundle_paths | first }} as {{ excalidraw_bundle.content_type }}"
+              - "Excalidraw missing paths: 200 {{ excalidraw_missing.results | map(attribute='content_type') | unique | join(', ') }}, so the content type above means something"
+              - "Excalidraw collaboration server: {{ excalidraw_room_scheme }}://{{ excalidraw_room_hostname }}:{{ excalidraw_room_container_http_port }}"
       rescue:
         # Whatever went wrong, the reason is almost always in the service log.
         - name: Retrieve the Excalidraw service log
