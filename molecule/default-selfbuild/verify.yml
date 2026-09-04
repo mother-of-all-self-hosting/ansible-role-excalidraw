@@ -215,7 +215,7 @@
               The compiled bundle points at {{ excalidraw_molecule_room_url }} and no longer
               mentions oss-collab.excalidraw.com
 
-        - name: Show Excalidraw verification summary
+        - name: Show the Excalidraw verification summary
           ansible.builtin.debug:
             msg:
               - "Excalidraw systemd: {{ excalidraw_service.status.ActiveState }}"
