@@ -22,7 +22,7 @@
 # configuration this role has that reaches the compiled JavaScript itself.
 
 ---
-- name: Verify Excalidraw
+- name: Verify self-built Excalidraw
   hosts: all
   become: true
   gather_facts: false
