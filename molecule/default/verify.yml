@@ -37,10 +37,10 @@
           ansible.builtin.assert:
             that:
               - excalidraw_molecule_container.Config.Image is search('excalidraw/excalidraw:')
-              - excalidraw_molecule_container.Config.Image.endswith(':' ~ excalidraw_role_defaults.excalidraw_version)
+              - excalidraw_molecule_container.Config.Image.endswith(':' ~ excalidraw_defaults.excalidraw_version)
             fail_msg: >-
               The container runs {{ excalidraw_molecule_container.Config.Image }}, which is not
-              excalidraw/excalidraw at the '{{ excalidraw_role_defaults.excalidraw_version }}' tag
+              excalidraw/excalidraw at the '{{ excalidraw_defaults.excalidraw_version }}' tag
               `excalidraw_version` names
             success_msg: >-
               The container runs {{ excalidraw_molecule_container.Config.Image }}, the tag

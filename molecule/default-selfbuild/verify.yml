@@ -43,7 +43,7 @@
         # number, so neither is a base image's version wearing a disguise.
         - name: Assert that Static Web Server is the version defaults/main.yml pins
           vars:
-            excalidraw_molecule_expected_sws: "{{ excalidraw_role_defaults.excalidraw_container_image_self_build_base_image_tag }}"
+            excalidraw_molecule_expected_sws: "{{ excalidraw_defaults.excalidraw_container_image_self_build_base_image_tag }}"
           ansible.builtin.assert:
             that:
               - excalidraw_molecule_container.Config.Labels['org.opencontainers.image.version'] == excalidraw_molecule_expected_sws
@@ -53,7 +53,7 @@
               - excalidraw_molecule_container.Config.Labels['org.opencontainers.image.version'] != '0.0.0-never-released'
             fail_msg: >-
               The running image reports Static Web Server
-              '{{ excalidraw_molecule_container.Config.Labels['org.opencontainers.image.version'] | default('nothing') }}'
+              '{{ excalidraw_molecule_container.Config.Labels['org.opencontainers.image.version'] | default('none') }}'
               by label and {{ excalidraw_molecule_container.Config.Env | select('match', 'SERVER_VERSION=') | list }}
               by environment, while defaults/main.yml pins
               {{ excalidraw_molecule_expected_sws }}
@@ -79,9 +79,9 @@
 
         - name: Assert that Static Web Server started with the configuration templates/env.j2 renders
           vars:
-            excalidraw_molecule_server_root: "{{ excalidraw_role_defaults.excalidraw_environment_variables_server_root }}"
+            excalidraw_molecule_server_root: "{{ excalidraw_defaults.excalidraw_environment_variables_server_root }}"
             excalidraw_molecule_startup_expectations:
-              - "static-web-server {{ excalidraw_role_defaults.excalidraw_container_image_self_build_base_image_tag }}"
+              - "static-web-server {{ excalidraw_defaults.excalidraw_container_image_self_build_base_image_tag }}"
               - "log level: {{ excalidraw_environment_variables_server_log_level }}"
               - "server bound to tcp socket [::]:{{ excalidraw_container_http_port }}"
               - 'fallback page: enabled=true, value="{{ excalidraw_molecule_server_root }}/index.html"'
@@ -94,7 +94,7 @@
               {{ excalidraw_startup_log.stdout_lines | select('search', 'static_web_server') | list }}
             success_msg: >-
               Static Web Server reports itself as
-              {{ excalidraw_role_defaults.excalidraw_container_image_self_build_base_image_tag }},
+              {{ excalidraw_defaults.excalidraw_container_image_self_build_base_image_tag }},
               bound to port {{ excalidraw_container_http_port }}, logging at
               {{ excalidraw_environment_variables_server_log_level }}, falling back to
               {{ excalidraw_molecule_server_root }}/index.html
@@ -219,7 +219,7 @@
           ansible.builtin.debug:
             msg:
               - "Excalidraw systemd: {{ excalidraw_service.status.ActiveState }}"
-              - "Excalidraw image: {{ excalidraw_molecule_container.Config.Image }} on Static Web Server {{ excalidraw_role_defaults.excalidraw_container_image_self_build_base_image_tag }}"
+              - "Excalidraw image: {{ excalidraw_molecule_container.Config.Image }} on Static Web Server {{ excalidraw_defaults.excalidraw_container_image_self_build_base_image_tag }}"
               - "Excalidraw published: container {{ excalidraw_container_http_port }} on host {{ excalidraw_container_http_host_bind_port }}"
               - "Excalidraw bundle: {{ excalidraw_molecule_bundle_paths | first }} as {{ excalidraw_bundle.content_type }}"
               - "Excalidraw missing paths: 200 {{ excalidraw_missing.results | map(attribute='content_type') | unique | join(', ') }}, so the content type above means something"

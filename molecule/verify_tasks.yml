@@ -26,14 +26,13 @@
 # path in existence, including all the ones that do not exist.
 
 ---
-- name: Include the role's default variables under a separate name
+# The role is not included in this playbook, so its defaults are not in
+# scope. Reading defaults/main.yml directly ties the version assertion
+# below.
+- name: Load the role defaults
   ansible.builtin.include_vars:
-    # Only leaf values may be read out of this. Anything written in terms of
-    # another variable would be resolved in the surrounding scope, where the
-    # role's variables do not exist. Loading it under a name of its own also
-    # keeps it from outranking the values this scenario deliberately tuned.
     file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
-    name: excalidraw_role_defaults
+    name: excalidraw_defaults
 
 - name: Wait for the Excalidraw systemd service to become active
   ansible.builtin.systemd_service:
@@ -107,13 +106,13 @@
 - name: Assert that the role's environment file reached the container
   vars:
     excalidraw_molecule_env: "{{ excalidraw_molecule_container.Config.Env }}"
-    excalidraw_molecule_server_root: "{{ excalidraw_role_defaults.excalidraw_environment_variables_server_root }}"
+    excalidraw_molecule_server_root: "{{ excalidraw_defaults.excalidraw_environment_variables_server_root }}"
   ansible.builtin.assert:
     that:
       - "'SERVER_ROOT=' ~ excalidraw_molecule_server_root in excalidraw_molecule_env"
       - "'SERVER_FALLBACK_PAGE=' ~ excalidraw_molecule_server_root ~ '/index.html' in excalidraw_molecule_env"
       - "'SERVER_PORT=' ~ excalidraw_container_http_port | string in excalidraw_molecule_env"
-      - "'TZ=' ~ excalidraw_role_defaults.excalidraw_environment_variables_tz in excalidraw_molecule_env"
+      - "'TZ=' ~ excalidraw_defaults.excalidraw_environment_variables_tz in excalidraw_molecule_env"
       - "'SERVER_LOG_LEVEL=' ~ excalidraw_environment_variables_server_log_level in excalidraw_molecule_env"
     fail_msg: "The container's environment is {{ excalidraw_molecule_env }}"
     success_msg: "The container's environment carries the SERVER_* and TZ values templates/env.j2 renders"
