@@ -60,15 +60,15 @@
 - name: Inspect the Excalidraw container
   ansible.builtin.command:
     cmd: docker inspect excalidraw
-  register: excalidraw_container_inspect
+  register: excalidraw_container_raw
   changed_when: false
   retries: 12
   delay: 5
-  until: excalidraw_container_inspect.rc == 0
+  until: excalidraw_container_raw.rc == 0
 
 - name: Set facts about the Excalidraw container
   ansible.builtin.set_fact:
-    excalidraw_molecule_container: "{{ excalidraw_container_inspect.stdout | from_json | first }}"
+    excalidraw_molecule_container: "{{ excalidraw_container_raw.stdout | from_json | first }}"
 
 - name: Assert that Excalidraw is running on the container network the role creates
   ansible.builtin.assert:
