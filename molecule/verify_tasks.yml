@@ -34,13 +34,14 @@
     file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
     name: excalidraw_defaults
 
-- name: Wait for the Excalidraw systemd service to become active (up to 180s)
+- name: Wait for the Excalidraw systemd services to become active (up to 180s each)
   ansible.builtin.systemd_service:
-    name: excalidraw.service
-  register: excalidraw_service
-  until: excalidraw_service.status.ActiveState == 'active'
+    name: "{{ item }}"
+  register: excalidraw_services
+  until: excalidraw_services.status.ActiveState == 'active'
   retries: 36
   delay: 5
+  loop: "{{ excalidraw_verify_units }}"
   # So that giving up is reported by the assertion below rather than as a
   # wall of systemd unit properties.
   failed_when: false
@@ -48,11 +49,20 @@
 # `Restart=always` in the systemd unit means that even a container which crashes
 # and gets restarted reads as active here, so this is a precondition rather than
 # a result.
-- name: Assert the Excalidraw systemd service is active
+- name: Assert the Excalidraw systemd services are active
   ansible.builtin.assert:
-    that: excalidraw_service.status.ActiveState == 'active'
-    fail_msg: "excalidraw.service is not active ({{ excalidraw_service.status.ActiveState }})"
-    success_msg: "excalidraw.service is active"
+    that: excalidraw_services.results | map(attribute='status.ActiveState') | unique | list == ['active']
+    fail_msg: >-
+      Not every service is active:
+      {{ dict(excalidraw_verify_units | zip(excalidraw_services.results | map(attribute='status.ActiveState'))) }}
+    success_msg: "Every systemd service is active"
+
+- name: Retrieve the Excalidraw systemd services log for debugging
+  when: excalidraw_debug_service_enabled | bool
+  ansible.builtin.command:
+    cmd: "journalctl --no-pager --output=cat --unit={{ item }}"
+  changed_when: false
+  loop: "{{ excalidraw_verify_units }}"
 
 ########################################################################
 #                                                                      #

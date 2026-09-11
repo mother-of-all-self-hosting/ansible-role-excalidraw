@@ -26,6 +26,11 @@
   hosts: all
   become: true
   gather_facts: false
+
+  vars:
+    excalidraw_verify_units:
+      - excalidraw.service
+
   tasks:
     - name: Verify that Excalidraw works
       block:
@@ -218,7 +223,7 @@
         - name: Show the Excalidraw verification summary
           ansible.builtin.debug:
             msg:
-              - "Excalidraw systemd: {{ excalidraw_service.status.ActiveState }}"
+              - "Excalidraw systemd: {% for unit, state in excalidraw_verify_units | zip(excalidraw_services.results | map(attribute='status.ActiveState')) %}{{ unit }} ({{ state }}){% if not loop.last %}, {% endif %}{% endfor %}"
               - "Excalidraw image: {{ excalidraw_molecule_container.Config.Image }} on Static Web Server {{ excalidraw_defaults.excalidraw_container_image_self_build_base_image_tag }}"
               - "Excalidraw published: container {{ excalidraw_container_http_port }} on host {{ excalidraw_container_http_host_bind_port }}"
               - "Excalidraw bundle: {{ excalidraw_molecule_bundle_paths | first }} as {{ excalidraw_bundle.content_type }}"

@@ -29,6 +29,9 @@ provisioner:
   inventory:
     group_vars:
       all:
+        # Helper variables
+        excalidraw_debug_service_enabled: false
+
         # Variables for Excalidraw
         excalidraw_uid: 1000
         excalidraw_gid: 1000
