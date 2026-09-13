@@ -196,6 +196,7 @@
               - "Excalidraw published: container {{ excalidraw_container_http_port }} on host {{ excalidraw_container_http_host_bind_port }}"
               - "Excalidraw bundle: {{ excalidraw_molecule_bundle_paths | first }} as {{ excalidraw_bundle.content_type }}"
               - "Excalidraw missing paths: 404, so the content type above means something"
+
       rescue:
         # Whatever went wrong, the reason is almost always in the systemd service log.
         - name: Retrieve the Excalidraw systemd service log
