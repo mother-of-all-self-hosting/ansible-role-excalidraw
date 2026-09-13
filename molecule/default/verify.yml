@@ -148,10 +148,50 @@
               The compiled bundle carries oss-collab.excalidraw.com, the value the self-build
               scenario replaces with a self-hosted collaboration server
 
+        - name: Verify nothing was quietly restarting while all of that was being checked
+          when: "excalidraw_restarts_check_enabled | bool"
+          block:
+            # `Restart=always` means the unit reads `active` while it is crash-looping,
+            # so `active` on its own says very little. The window has to be watched with
+            # everything already answering.
+            - name: Sample the restart counters
+              ansible.builtin.systemd_service:
+                name: "{{ item }}"
+              register: excalidraw_restarts_before
+              loop: "{{ excalidraw_verify_units }}"
+
+            # Comfortably longer than the unit's `RestartSec=30`, so a crash loop has to
+            # tick at least once inside the window.
+            - name: Watch the services for 45 seconds
+              ansible.builtin.pause:
+                seconds: 45
+
+            - name: Sample the restart counters again
+              ansible.builtin.systemd_service:
+                name: "{{ item }}"
+              register: excalidraw_restarts_after
+              loop: "{{ excalidraw_verify_units }}"
+
+            - name: Assert no service restarted while it was up
+              ansible.builtin.assert:
+                that:
+                  - excalidraw_restarts_after.results | map(attribute='status.NRestarts') | list == excalidraw_restarts_before.results | map(attribute='status.NRestarts') | list
+                  - excalidraw_restarts_after.results | map(attribute='status.ActiveState') | unique | list == ['active']
+                fail_msg: >-
+                  A service restarted while it was supposedly up, so `active` was hiding a crash loop.
+                  Before:
+                  {% for unit, restarts in excalidraw_verify_units | zip(excalidraw_restarts_before.results | map(attribute='status.NRestarts')) %}{{ restarts }} ({{ unit }}){% if not loop.last %}, {% endif %}{% endfor %},
+                  after:
+                  {% for unit, restarts in excalidraw_verify_units | zip(excalidraw_restarts_after.results | map(attribute='status.NRestarts')) %}{{ restarts }} ({{ unit }}){% if not loop.last %}, {% endif %}{% endfor %}
+                success_msg: >-
+                  None of the services restarted over 45 seconds of watching (restarts so far:
+                  {% for unit, restarts in excalidraw_verify_units | zip(excalidraw_restarts_after.results | map(attribute='status.NRestarts')) %}{{ restarts }} ({{ unit }}){% if not loop.last %}, {% endif %}{% endfor %})
+
         - name: Show the Excalidraw verification summary
           ansible.builtin.debug:
             msg:
               - "Excalidraw systemd: {% for unit, state in excalidraw_verify_units | zip(excalidraw_services.results | map(attribute='status.ActiveState')) %}{{ unit }} ({{ state }}){% if not loop.last %}, {% endif %}{% endfor %}"
+              - "Excalidraw restarts: {% for unit, restarts in excalidraw_verify_units | zip(excalidraw_restarts_after.results | map(attribute='status.NRestarts')) %}{{ restarts }} ({{ unit }}){% if not loop.last %}, {% endif %}{% endfor %}"
               - "Excalidraw image: {{ excalidraw_molecule_container.Config.Image }} behind {{ excalidraw_index.server }}"
               - "Excalidraw published: container {{ excalidraw_container_http_port }} on host {{ excalidraw_container_http_host_bind_port }}"
               - "Excalidraw bundle: {{ excalidraw_molecule_bundle_paths | first }} as {{ excalidraw_bundle.content_type }}"
