@@ -144,6 +144,12 @@ excalidraw_container_extra_arguments: "{{ excalidraw_container_extra_arguments_a
 excalidraw_container_extra_arguments_auto: []
 excalidraw_container_extra_arguments_custom: []
 
+# A list of extra arguments to pass to the process inside the container
+# Example: ['--SOME_ARGUMENT']
+excalidraw_process_extra_arguments: "{{ excalidraw_process_extra_arguments_auto + excalidraw_process_extra_arguments_custom }}"
+excalidraw_process_extra_arguments_auto: []
+excalidraw_process_extra_arguments_custom: []
+
 # Specifies the value of the `X-XSS-Protection` header
 # Stops pages from loading when they detect reflected cross-site scripting (XSS) attacks.
 #
