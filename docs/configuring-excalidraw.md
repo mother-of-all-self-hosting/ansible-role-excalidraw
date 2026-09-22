@@ -60,7 +60,7 @@ After adjusting the hostname, make sure to adjust your DNS records to point the 
 
 ### Using the default Docker image (optional)
 
-Since the service uses the nginx Docker image inside the container by default (see [this line](https://github.com/excalidraw/excalidraw/blob/master/Dockerfile#L16) on `Dockerfile`) and therefore requires to use the root user, this role is configured to build the image on the source code with [this Dockerfile](../templates/Dockerfile.j2) in order to serve the application with [`static-web-server`](https://static-web-server.net/), which runs as non-root user without any additional capabilities.
+Since the service uses the nginx Docker image inside the container by default (refer to [this line](https://github.com/excalidraw/excalidraw/blob/master/Dockerfile#L16) on `Dockerfile`) and therefore requires to use the root user, this role is configured to build the image on the source code with [this Dockerfile](../templates/Dockerfile.j2) in order to serve the application with [`static-web-server`](https://static-web-server.net/), which runs as non-root user without any additional capabilities.
 
 If you prefer simply using [the official Docker image](https://hub.docker.com/r/excalidraw/excalidraw) instead, add the following configuration to your `vars.yml` file:
 
