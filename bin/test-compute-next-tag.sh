@@ -56,7 +56,7 @@ scenario() {
 		excalidraw_version: latest
 		excalidraw_container_image_tag: "{{ excalidraw_version }}"
 		excalidraw_container_image_self_build_base_image: "{{ excalidraw_container_image_self_build_base_image_name }}:{{ excalidraw_container_image_self_build_base_image_tag }}"
-		excalidraw_container_image_self_build_base_image_name: docker.io/joseluisq/static-web-server
+		excalidraw_container_image_self_build_base_image_name: joseluisq/static-web-server
 		# renovate: datasource=docker depName=joseluisq/static-web-server versioning=semver
 		excalidraw_container_image_self_build_base_image_tag: 2.44.0
 	YAML
