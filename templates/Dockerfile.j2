@@ -9,7 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
   yarn is not shipped with Node 26
   See: https://github.com/nodejs/snap/issues/88
 #}
-FROM --platform=${BUILDPLATFORM} node:24.22.2 AS build
+FROM --platform=${BUILDPLATFORM} node:26.13.0 AS build
 
 WORKDIR /opt/node_app
 
