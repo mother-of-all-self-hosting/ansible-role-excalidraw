@@ -22,9 +22,6 @@
   with_items:
     - excalidraw_uid
     - excalidraw_gid
-    - excalidraw_hostname
-    - excalidraw_path_prefix
-    - excalidraw_container_network
 
 - name: Fail if logging level of Static Web Server for Excalidraw is invalid
   ansible.builtin.fail:
