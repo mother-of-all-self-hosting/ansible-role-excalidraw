@@ -29,6 +29,9 @@ excalidraw_hostname: ""
 
 # The path at which Excalidraw is served.
 # This value must either be `/` or not end with a slash (e.g. `/excalidraw`).
+#
+# Hosting Excalidraw under a subpath does not seem to be possible due to Excalidraw's
+# technical limitations.
 excalidraw_path_prefix: /
 
 excalidraw_container_image: "{{ excalidraw_container_image_registry_prefix }}excalidraw/excalidraw:{{ excalidraw_container_image_tag }}"
